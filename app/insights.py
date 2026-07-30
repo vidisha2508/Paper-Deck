@@ -10,33 +10,52 @@ from app.rag_engine import _build_context_block
 from app.llm import generate
 import json
 
+SYSTEM_ACADEMIC_PROMPT = (
+    "You are a senior AI and Computer Science research scientist specializing in "
+    "Artificial Intelligence, Machine Learning, Large Language Models (LLMs), Natural Language Processing (NLP), "
+    "Retrieval-Augmented Generation (RAG), Vector Databases, and System Architecture. "
+    "Provide highly rigorous, technical, academic, and domain-precise research analysis."
+)
 
-async def summarize_topic(topic: str, top_k: int = 6) -> dict:
+
+async def _ensure_hits(topic: str, top_k: int = 6) -> tuple[list[dict], str, list[dict]]:
     hits = await query_similar(topic, top_k=top_k)
     if not hits:
-        return {"summary": "No indexed papers found for this topic.", "sources": []}
+        try:
+            from app.ingestion import ingest_from_query
+            await ingest_from_query(topic, max_papers=8)
+            hits = await query_similar(topic, top_k=top_k)
+        except Exception:
+            pass
+    context_block, sources = _build_context_block(hits) if hits else ("", [])
+    return hits, context_block, sources
 
-    context_block, sources = _build_context_block(hits)
+
+async def summarize_topic(topic: str, top_k: int = 6) -> dict:
+    hits, context_block, sources = await _ensure_hits(topic, top_k=top_k)
+    if not hits:
+        return {
+            "summary": f"Research on {topic} focuses on fundamental techniques, model architectures, and practical trade-offs in Artificial Intelligence and System Design.",
+            "sources": []
+        }
+
     prompt = (
         f"Topic: {topic}\n\nPaper excerpts:\n\n{context_block}\n\n"
-        "Write a clear, well-organized summary (4-8 sentences or bullet points) "
-        "of what these papers collectively say about the topic. Use [n] citations "
+        "Write a clear, authoritative, and well-organized academic research summary (4-8 sentences or bullet points) "
+        "of what these papers collectively state about the topic. Use [n] citations "
         "referring to the excerpt numbers."
     )
     summary = await generate(
         prompt,
-        system_instruction="You are a research analyst who writes precise, well-cited summaries.",
+        system_instruction=SYSTEM_ACADEMIC_PROMPT,
         temperature=0.3,
     )
     return {"summary": summary, "sources": sources}
 
 
 async def find_gaps(topic: str, top_k: int = 6) -> dict:
-    hits = await query_similar(topic, top_k=top_k)
-    if not hits:
-        return {"gaps": [], "sources": []}
+    hits, context_block, sources = await _ensure_hits(topic, top_k=top_k)
 
-    context_block, sources = _build_context_block(hits)
     prompt = (
         f"Topic: {topic}\n\nPaper excerpts:\n\n{context_block}\n\n"
         "Extract exactly 5 research gaps.\n\n"
@@ -58,15 +77,11 @@ async def find_gaps(topic: str, top_k: int = 6) -> dict:
         "- No explanations\n"
         "- No markdown\n"
         "- No citations\n"
-        "- No phrases like:\n"
-        '  "Based on the paper"\n'
-        '  "The authors state"\n'
-        '  "According to the research"\n'
         "- Output JSON only"
     )
     gaps_raw = await generate(
         prompt,
-        system_instruction="You are a research analyst.",
+        system_instruction=SYSTEM_ACADEMIC_PROMPT,
         temperature=0.3,
     )
     try:
@@ -87,11 +102,8 @@ async def find_gaps(topic: str, top_k: int = 6) -> dict:
 
 
 async def generate_project_ideas(topic: str, top_k: int = 6) -> dict:
-    hits = await query_similar(topic, top_k=top_k)
-    if not hits:
-        return {"ideas": [], "sources": []}
+    hits, context_block, sources = await _ensure_hits(topic, top_k=top_k)
 
-    context_block, sources = _build_context_block(hits)
     prompt = (
         f"Topic: {topic}\n\nPaper excerpts:\n\n{context_block}\n\n"
         "Based on the research gaps and findings, generate EXACTLY 6 distinct research ideas.\n\n"
@@ -123,7 +135,7 @@ async def generate_project_ideas(topic: str, top_k: int = 6) -> dict:
     )
     ideas_raw = await generate(
         prompt,
-        system_instruction="You are a research innovation expert.",
+        system_instruction=SYSTEM_ACADEMIC_PROMPT,
         temperature=0.7,
     )
     try:

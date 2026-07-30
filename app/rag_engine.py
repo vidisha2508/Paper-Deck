@@ -22,7 +22,7 @@ class RAGResult:
     sources: list[dict]
 
 
-def _build_context_block(hits: list[dict], max_chars: int = 10000) -> tuple[str, list[dict]]:
+def _build_context_block(hits: list[dict], max_chars: int = 3500) -> tuple[str, list[dict]]:
     lines = []
     sources = []
     seen_paper_ids = set()
