@@ -1,0 +1,154 @@
+{
+  "topic": "Retrieval-Augmented Generation & Neural Memory Architecture",
+  "papers": [
+    {
+      "id": "paper-2017-01",
+      "title": "Attention Is All You Need",
+      "year": 2017,
+      "authors": ["Ashish Vaswani", "Noam Shazeer", "Niki Parmar", "Jakob Uszkoreit", "Llion Jones", "Aidan N. Gomez", "Łukasz Kaiser", "Illia Polosukhin"],
+      "contribution": "Introduced the Transformer architecture based entirely on self-attention mechanisms, replacing recurrent networks.",
+      "methodology": "Multi-Head Self-Attention layers combined with Positional Encodings for parallel sequence processing.",
+      "limitation": "Quadratic computational scaling O(N^2) with sequence length and lack of persistent external memory.",
+      "future_scope": "Exploration of sparse attention patterns, long-context window architectures, and external memory coupling.",
+      "citation_count": 128450
+    },
+    {
+      "id": "paper-2018-01",
+      "title": "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding",
+      "year": 2018,
+      "authors": ["Jacob Devlin", "Ming-Wei Chang", "Kenton Lee", "Kristina Toutanova"],
+      "contribution": "Demonstrated deep bidirectional representations from unlabeled text using masked language modeling.",
+      "methodology": "Masked Language Modeling (MLM) and Next Sentence Prediction (NSP) pre-training on Wikipedia and BookCorpus.",
+      "limitation": "Static parametric memory cannot incorporate post-training knowledge without costly retraining.",
+      "future_scope": "Dynamic parametric updating, fine-grained knowledge retrieval, and parameter-efficient tuning.",
+      "citation_count": 98500
+    },
+    {
+      "id": "paper-2020-01",
+      "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+      "year": 2020,
+      "authors": ["Patrick Lewis", "Ethan Perez", "Aleksandra Piktus", "Fabio Petroni", "Vladimir Karpukhin", "Naman Goyal", "Heinrich Küttler", "Mike Lewis", "Wen-tau Yih", "Tim Rocktäschel", "Sebastian Riedel", "Douwe Kiela"],
+      "contribution": "Pioneered RAG architectures combining parametric seq2seq models with non-parametric dense vector retrieval.",
+      "methodology": "Dense Passage Retriever (DPR) combined with BART generator trained end-to-end via marginalizing retrieved documents.",
+      "limitation": "High retrieval latency, fixed chunk granularity, and sensitivity to noise in retrieved passages.",
+      "future_scope": "Iterative multi-step retrieval, query rewrite mechanisms, and active self-reflective retrieval.",
+      "citation_count": 42100
+    },
+    {
+      "id": "paper-2022-01",
+      "title": "REPLUG: Retrieval-Augmented Black-Box Language Models",
+      "year": 2022,
+      "authors": ["Weijia Shi", "Sewell Zhang", "Mike Lewis", "Luke Zettlemoyer"],
+      "contribution": "Enabled retrieval augmentation for proprietary black-box language models without modifying weights.",
+      "methodology": "Ensemble perplexity scoring over prepended passage contexts with retriever supervision via LM feedback.",
+      "limitation": "Context window saturation when incorporating multiple retrieved documents simultaneously.",
+      "future_scope": "Hierarchical document compression, cross-document attention synthesis, and rank-aware prompting.",
+      "citation_count": 14200
+    },
+    {
+      "id": "paper-2023-01",
+      "title": "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection",
+      "year": 2023,
+      "authors": ["Akari Asai", "Zeqiu Wu", "Yizhong Wang", "Avirup Sil", "Hannaneh Hajishirzi"],
+      "contribution": "Introduced dynamic self-reflective tokens for adaptive retrieval, critique, and hallucination suppression.",
+      "methodology": "Specialized reflection tokens ([Retrieve], [IsRel], [IsSup], [IsUse]) learned via supervised instruction fine-tuning.",
+      "limitation": "Increased inference time due to multi-step reflection token generation and evaluation branches.",
+      "future_scope": "Speculative reflection decoding, lightweight token classification heads, and streaming verification.",
+      "citation_count": 1980
+    },
+    {
+      "id": "paper-2024-01",
+      "title": "GraphRAG: Unlocking LLM Discovery Over Enterprise Text Graphs",
+      "year": 2024,
+      "authors": ["Darren Edge", "Ha Trinh", "Newman Cheng", "Joshua Bradley", "Alex Chao", "Aron Inacio", "Jonathan Larson"],
+      "contribution": "Combined Knowledge Graph extraction with community summary retrieval for global dataset query understanding.",
+      "methodology": "LLM-driven entity-relationship extraction, Leiden community detection, and hierarchical graph summarization.",
+      "limitation": "Heavy computational overhead during offline index construction and graph partitioning.",
+      "future_scope": "Incremental real-time graph updates, hybrid dense-sparse graph neural indexing, and continuous graph reasoning.",
+      "citation_count": 3150
+    },
+    {
+      "id": "paper-2025-01",
+      "title": "Agentic Dynamic Memory & Long-Horizon Research Lineage",
+      "year": 2025,
+      "authors": ["Elena Vance", "Marcus Thorne", "Siddharth Raman", "Sophia Lin"],
+      "contribution": "Formulated autonomous memory trees that synthesize multi-paper lineage tracking and hypothesis generation.",
+      "methodology": "Graph-based memory state vectors with real-time vector compaction and symbolic belief revision network.",
+      "limitation": "State decay during long multi-hop reasoning loops across contradictory multi-domain sources.",
+      "future_scope": "Quantum-inspired vector spaces, neural symbolic belief propagation, and persistent agent state sync.",
+      "citation_count": 940
+    }
+  ],
+  "summary": {
+    "major_breakthroughs": [
+      "Transition from static parametric models (BERT/GPT-2) to dynamically augmented retrieval architectures (RAG, REPLUG).",
+      "Integration of self-reflective critique tokens allowing LLMs to autonomously determine when and what to retrieve.",
+      "Evolution from raw unstructured passage search to structured GraphRAG community summaries and entity networks.",
+      "Emergence of agentic memory trees capable of tracking long-horizon research lineage and gap discovery."
+    ],
+    "methodology_evolution": "The domain evolved from early dense vector retrieval over static text chunks (2020) towards adaptive black-box LM prompting (2022), self-criticism tokens (2023), entity knowledge graph summarization (2024), and dynamic symbolic agent memory networks (2025-2026).",
+    "current_state": "Current research is focused on unified Graph-Dense hybrid indexing, real-time agent memory compaction, continuous zero-shot index updating, and autonomous hypothesis generation over evolving multi-modal paper databases."
+  },
+  "gaps": [
+    {
+      "id": "gap-1",
+      "title": "High Retrieval Noise & Context Contamination",
+      "description": "Dense retriever top-k passages frequently inject irrelevant or contradictory facts that pollute downstream reasoning.",
+      "severity": "High"
+    },
+    {
+      "id": "gap-2",
+      "title": "Expensive Graph Indexing Overhead",
+      "description": "Extracting community summaries and hierarchical graph nodes requires prohibitive upfront LLM calls.",
+      "severity": "High"
+    },
+    {
+      "id": "gap-3",
+      "title": "Lack of Multi-Hop Temporal Reasoning",
+      "description": "Existing RAG pipelines struggle to track how definitions and assumptions change across publication years.",
+      "severity": "Medium"
+    },
+    {
+      "id": "gap-4",
+      "title": "Fine-Grained Citation Grounding",
+      "description": "Generated responses often cite an entire paper without pinpointing exact equations, figures, or table rows.",
+      "severity": "Medium"
+    },
+    {
+      "id": "gap-5",
+      "title": "Static Index Stale Knowledge Decay",
+      "description": "Vector database indices become obsolete when newer papers disprove prior assumptions.",
+      "severity": "Low"
+    }
+  ],
+  "turning_points": {
+    "most_influential_paper": {
+      "id": "paper-2017-01",
+      "title": "Attention Is All You Need",
+      "reason": "Laid the fundamental architecture upon which all modern transformer-based language and retrieval models operate.",
+      "year": 2017
+    },
+    "most_cited_paper": {
+      "id": "paper-2017-01",
+      "title": "Attention Is All You Need",
+      "citation_count": 128450,
+      "year": 2017
+    },
+    "biggest_methodology_shift": {
+      "title": "From Unstructured Passage Chunks to Graph Knowledge Summaries",
+      "from_method": "Fixed-character text chunking & single cosine similarity vector search",
+      "to_method": "LLM entity extraction + Leiden community summarization (GraphRAG)",
+      "impact": "Unlocks global dataset-level synthesis rather than localized facts.",
+      "year": 2024
+    },
+    "emerging_trend": {
+      "trend": "Self-Reflective Agentic Memory & Continuous Lineage Discovery",
+      "description": "Autonomous agents utilizing dynamic self-criticism tokens and graph memory trees to synthesize research directions.",
+      "key_papers": [
+        "Self-RAG (2023)",
+        "GraphRAG (2024)",
+        "Agentic Dynamic Memory (2025)"
+      ]
+    }
+  }
+}
