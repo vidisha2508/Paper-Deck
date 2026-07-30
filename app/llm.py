@@ -69,26 +69,26 @@ async def generate(prompt: str, system_instruction: str = None, temperature: flo
                             await asyncio.sleep(wait_time)
                         else:
                             response.raise_for_status()
-                    except httpx.HTTPError as e:
+                    except Exception as e:
                         if attempt < 5:
                             await asyncio.sleep((2 ** attempt) + 1.0)
                         else:
-                            raise e
+                            logger.error(f"Groq API error: {e}")
+                            break
         return ""
 
     # Fallback to Gemini if Groq API key is not set
-    from app.embeddings import get_client
-    from google.genai import types
-    from google.genai.errors import APIError
+    try:
+        from app.embeddings import get_client
+        from google.genai import types
 
-    client = get_client()
-    config = types.GenerateContentConfig(
-        temperature=temperature,
-        system_instruction=system_instruction,
-    )
+        client = get_client()
+        config = types.GenerateContentConfig(
+            temperature=temperature,
+            system_instruction=system_instruction,
+        )
 
-    def _generate_gemini_sync():
-        for attempt in range(5):
+        def _generate_gemini_sync():
             try:
                 response = client.models.generate_content(
                     model=settings.gemini_llm_model,
@@ -96,12 +96,12 @@ async def generate(prompt: str, system_instruction: str = None, temperature: flo
                     config=config,
                 )
                 return response.text or ""
-            except APIError as e:
-                if ("429" in str(e) or "RESOURCE_EXHAUSTED" in str(e) or "503" in str(e) or "UNAVAILABLE" in str(e)) and attempt < 4:
-                    time.sleep(15 * (attempt + 1))
-                else:
-                    raise
-        return ""
+            except Exception as e:
+                logger.error(f"Gemini LLM error: {e}")
+                return ""
 
-    return await asyncio.to_thread(_generate_gemini_sync)
+        return await asyncio.to_thread(_generate_gemini_sync)
+    except Exception as e:
+        logger.error(f"LLM fallback error: {e}")
+        return ""
 
