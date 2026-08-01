@@ -159,7 +159,7 @@ async def search_semantic_scholar(query: str, max_results: Optional[int] = None)
         return []
 
 
-async def search_papers(query: str, sources: Optional[list[str]] = None) -> list[Paper]:
+async def search_papers(query: str, sources: Optional[list[str]] = None, max_results: Optional[int] = None) -> list[Paper]:
     """
     Search across configured sources and de-duplicate by normalized title.
     sources: subset of ["arxiv", "semantic_scholar"]; defaults to both.
@@ -169,12 +169,12 @@ async def search_papers(query: str, sources: Optional[list[str]] = None) -> list
 
     if "arxiv" in sources:
         try:
-            results.extend(await search_arxiv(query))
+            results.extend(await search_arxiv(query, max_results=max_results))
         except Exception:
             pass
     if "semantic_scholar" in sources:
         try:
-            results.extend(await search_semantic_scholar(query))
+            results.extend(await search_semantic_scholar(query, max_results=max_results))
         except Exception:
             pass
 

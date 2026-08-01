@@ -12,7 +12,7 @@ from app.chunking import chunk_text
 from app.vector_store import upsert_chunks, paper_already_indexed
 
 
-async def ingest_paper(paper: Paper, force: bool = False) -> dict:
+async def ingest_paper(paper: Paper, query_topic: str = "", force: bool = False) -> dict:
     """Ingests a single paper: PDF -> text -> chunks -> embeddings -> Chroma."""
     if not force and paper_already_indexed(paper.paper_id):
         return {"paper_id": paper.paper_id, "status": "already_indexed", "chunks": 0}
@@ -26,6 +26,8 @@ async def ingest_paper(paper: Paper, force: bool = False) -> dict:
 
     chunks = chunk_text(paper.paper_id, text)
     metadata = {
+        "paper_id": paper.paper_id,
+        "query_topic": query_topic.strip().lower() if query_topic else "",
         "title": paper.title,
         "source": paper.source,
         "year": paper.year if paper.year is not None else 0,
@@ -48,7 +50,7 @@ async def ingest_from_query(query: str, sources: list[str] = None, max_papers: i
 
     async def _bounded(p: Paper):
         async with semaphore:
-            return await ingest_paper(p)
+            return await ingest_paper(p, query_topic=query)
 
     results = await asyncio.gather(*[_bounded(p) for p in papers])
     return {

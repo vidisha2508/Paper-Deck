@@ -5,8 +5,6 @@ Includes robust fallback for offline or unauthenticated API states.
 """
 import asyncio
 import hashlib
-import random
-import time
 from google import genai
 from google.genai import types
 
@@ -23,12 +21,17 @@ def get_client() -> genai.Client:
 
 
 def _fallback_embedding(text: str, dim: int = 768) -> list[float]:
-    """Deterministic fallback vector generation when API credentials fail."""
-    seed = int(hashlib.md5(text.encode('utf-8')).hexdigest(), 16) % (2**32)
-    rng = random.Random(seed)
-    raw = [rng.uniform(-1.0, 1.0) for _ in range(dim)]
-    norm = sum(x * x for x in raw) ** 0.5 or 1.0
-    return [x / norm for x in raw]
+    """Deterministic term-frequency feature hashing fallback vector when external API credentials fail."""
+    import re
+    vec = [0.0] * dim
+    words = re.findall(r'\w+', text.lower())
+    if not words:
+        return vec
+    for w in words:
+        idx = int(hashlib.md5(w.encode('utf-8')).hexdigest(), 16) % dim
+        vec[idx] += 1.0
+    norm = sum(x * x for x in vec) ** 0.5 or 1.0
+    return [x / norm for x in vec]
 
 
 def _embed_sync(texts: list[str], task_type: str) -> list[list[float]]:

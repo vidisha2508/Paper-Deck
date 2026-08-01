@@ -6,10 +6,14 @@ import os
 import hashlib
 from pathlib import Path
 
+import logging
 import httpx
 import fitz  # PyMuPDF
+import pypdf  # PyPDF fallback
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 Path(settings.pdf_download_dir).mkdir(parents=True, exist_ok=True)
 
@@ -27,21 +31,26 @@ async def download_pdf(paper_id: str, pdf_url: str) -> str:
 
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
     try:
-        async with httpx.AsyncClient(timeout=60.0, follow_redirects=True, headers=headers) as client:
+        async with httpx.AsyncClient(timeout=5.0, follow_redirects=True, headers=headers) as client:
             resp = await client.get(pdf_url)
             resp.raise_for_status()
 
         with open(local_path, "wb") as f:
             f.write(resp.content)
         return local_path
-    except Exception:
+    except Exception as e:
+        logger.error(f"Failed to download PDF from {pdf_url}: {e}")
         return ""
 
 
 def extract_text(pdf_path: str) -> str:
-    """Extracts and cleans text from a PDF file using PyMuPDF (fitz)."""
+    """Extracts and cleans text from a PDF file using PyMuPDF (fitz) with PyPDF fallback."""
     if not pdf_path or not os.path.exists(pdf_path):
         return ""
+
+    clean_text = ""
+
+    # 1. Try PyMuPDF (fitz)
     try:
         doc = fitz.open(pdf_path)
         pages_text = []
@@ -55,12 +64,29 @@ def extract_text(pdf_path: str) -> str:
         doc.close()
 
         full_text = "\n".join(pages_text)
-        lines = [line.strip() for line in full_text.splitlines()]
-        lines = [line for line in lines if line]
+        lines = [line.strip() for line in full_text.splitlines() if line.strip()]
         clean_text = "\n".join(lines)
-        return clean_text
-    except Exception:
-        return ""
+    except Exception as e:
+        logger.warning(f"PyMuPDF fitz extraction failed for {pdf_path}: {e}")
+
+    # 2. If fitz returned empty text, fallback to pypdf
+    if not clean_text:
+        try:
+            reader = pypdf.PdfReader(pdf_path)
+            pages_text = []
+            for page in reader.pages:
+                try:
+                    text = page.extract_text() or ""
+                    pages_text.append(text)
+                except Exception:
+                    continue
+            full_text = "\n".join(pages_text)
+            lines = [line.strip() for line in full_text.splitlines() if line.strip()]
+            clean_text = "\n".join(lines)
+        except Exception as e:
+            logger.warning(f"pypdf fallback extraction also failed for {pdf_path}: {e}")
+
+    return clean_text
 
 
 async def process_paper_pdf(paper_id: str, pdf_url: str) -> str:

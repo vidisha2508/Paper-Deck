@@ -6,15 +6,15 @@
 <title>PaperDeck — Find the Gap. Build the Future.</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;500;600;700&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
 <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
 <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
 <style>
   :root{
     --bg:#FFF4E3;
-    --paper:#FFFFFF;
-    --ink:#15121F;
+    --paper:#FAF6EC;
+    --ink:#14161C;
     --purple:#7C5CFC;
     --pink:#FF6FB5;
     --yellow:#FFD166;
@@ -33,6 +33,27 @@
     --shadow: 6px 6px 0px var(--ink);
     --shadow-sm: 4px 4px 0px var(--ink);
     --shadow-lg: 9px 9px 0px var(--ink);
+
+    /* Intro & Brand Color Tokens */
+    --paper-line:#E4DCC8;
+    --text-ink:#211E1B;
+    --mint:#B7E4C7;
+    --lavender:#C7C7ED;
+    --butter:#F3E2A6;
+    --blush:#F0C6CF;
+
+    /* 3D Cylindrical Carousel Tokens */
+    --bg-warm: #FBF3DE;
+    --panel: #FFFFFF;
+    --muted: #6B6B75;
+    --rose: #F3D7DE;
+    --rose-ink: #B23A5C;
+    --blue-tint: #DCEBFB;
+    --blue-ink: #2C6CB0;
+    --gold: #F6E7B4;
+    --gold-ink: #8A6D1D;
+    --lav: #E6E0FB;
+    --lav-ink: #6C4FD6;
   }
   *{ box-sizing:border-box; margin:0; padding:0; }
   html{ scroll-behavior:smooth; }
@@ -60,16 +81,17 @@
     border-bottom: var(--bw) solid var(--ink);
   }
   .nav{ display:flex; align-items:center; justify-content:space-between; padding:16px 28px; max-width:1120px; margin:0 auto; }
-  .logo{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:20px; display:flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); }
+  .logo{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:22px; display:inline-flex; align-items:center; gap:10px; text-decoration:none; color:var(--ink); }
   .logo-mark{
-    width:30px; height:30px; border-radius:8px;
-    background: var(--grad);
-    border: var(--bw) solid var(--ink);
-    box-shadow: 3px 3px 0px var(--ink);
-    display:flex; align-items:center; justify-content:center;
-    font-family:'Space Grotesk',sans-serif; font-size:14px; font-weight:700; color:var(--ink);
-    transform: rotate(-4deg);
+    width:42px; height:42px;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    display:inline-flex; align-items:center; justify-content:center;
+    object-fit:contain; padding:0;
+    transition: transform .2s ease;
   }
+  .logo:hover .logo-mark{ transform: scale(1.08); }
   .nav-links{ display:flex; gap:26px; font-size:14.5px; font-weight:600; }
   .nav-links a{ color:var(--ink); text-decoration:none; }
   .nav-links a:hover{ color:var(--purple); }
@@ -545,12 +567,469 @@
   @media (max-width:520px){
     .features-grid{ grid-template-columns:1fr; }
   }
-  @media (prefers-reduced-motion: reduce){
-    *{ animation:none !important; transition:none !important; }
+  /* Floating AI Research Notes Button */
+  .floating-notes-btn {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    z-index: 9990;
+    background: var(--yellow);
+    color: var(--ink);
+    border: 2.5px solid var(--ink);
+    border-radius: 50px;
+    padding: 12px 22px;
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14.5px;
+    box-shadow: 4px 4px 0px var(--ink);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: transform .15s, box-shadow .15s, background .15s;
+  }
+  .floating-notes-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--ink);
+    background: #ffe600;
+  }
+
+  /* Solitaire Deck Component */
+  .solitaire-deck-container {
+    position: relative;
+    width: 100%;
+    max-width: 820px;
+    height: 330px;
+    margin: 20px auto 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .solitaire-deck-container.dealt {
+    cursor: default;
+  }
+
+  .solitaire-card {
+    position: absolute;
+    top: 10px;
+    left: calc(50% - 115px);
+    width: 230px;
+    height: 300px;
+    padding: 22px;
+    border-radius: 16px;
+    border: 3px solid var(--ink);
+    box-shadow: 6px 6px 0px var(--ink);
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    transition: left 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+                transform 0.6s cubic-bezier(0.25, 1, 0.5, 1),
+                box-shadow 0.2s ease;
+    will-change: transform, left;
+    overflow: hidden;
+  }
+
+  .solitaire-card.card-breakthroughs {
+    background-color: var(--pastel-purple);
+  }
+
+  .solitaire-card.card-current-state {
+    background-color: var(--pastel-green);
+  }
+
+  .solitaire-card.card-methodology {
+    background-color: var(--pastel-blue);
+  }
+
+  /* At rest (stacked messy pile) */
+  .solitaire-deck-container:not(.dealt) .card-breakthroughs {
+    z-index: 3;
+    transform: rotate(-7deg) translate(-5px, 3px);
+  }
+
+  .solitaire-deck-container:not(.dealt) .card-current-state {
+    z-index: 2;
+    transform: rotate(4deg) translate(6px, -4px);
+  }
+
+  .solitaire-deck-container:not(.dealt) .card-methodology {
+    z-index: 1;
+    transform: rotate(9deg) translate(-3px, -6px);
+  }
+
+  .solitaire-deck-container:not(.dealt):hover .solitaire-card {
+    box-shadow: 8px 8px 0px var(--ink);
+  }
+
+  /* Dealt state (horizontal row) */
+  /* Breakthroughs -> left slot */
+  .solitaire-deck-container.dealt .card-breakthroughs {
+    left: calc(50% - 365px);
+    transform: rotate(0deg) translate(0, 0);
+    z-index: 1;
+  }
+
+  /* Methodology -> center slot */
+  .solitaire-deck-container.dealt .card-methodology {
+    left: calc(50% - 115px);
+    transform: rotate(0deg) translate(0, 0);
+    z-index: 2;
+  }
+
+  /* Current State -> right slot */
+  .solitaire-deck-container.dealt .card-current-state {
+    left: calc(50% + 135px);
+    transform: rotate(0deg) translate(0, 0);
+    z-index: 3;
+  }
+
+  /* Hover lift when dealt */
+  .solitaire-deck-container.dealt .solitaire-card:hover {
+    transform: translateY(-4px) rotate(0deg) !important;
+    box-shadow: 9px 9px 0px var(--ink) !important;
+  }
+
+  /* Card Typography */
+  .solitaire-card-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+    margin-bottom: 10px;
+    line-height: 1;
+  }
+
+  .solitaire-card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ink);
+    margin-bottom: 12px;
+  }
+
+  .solitaire-card-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--ink);
+    font-weight: 400;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  @media (max-width: 780px) {
+    .solitaire-deck-container {
+      height: auto;
+      min-height: 330px;
+    }
+    .solitaire-deck-container.dealt {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+      margin-top: 10px;
+    }
+    .solitaire-deck-container.dealt .solitaire-card {
+      position: relative;
+      left: auto !important;
+      top: auto !important;
+      transform: none !important;
+    }
+  }
+
+  /* 3D Cylindrical Carousel Tokens & Styles */
+  :root {
+    --bg-warm: #FBF3DE;
+    --panel: #FFFFFF;
+    --ink: #1B1B1F;
+    --muted: #6B6B75;
+    --rose: #F3D7DE;
+    --rose-ink: #B23A5C;
+    --blue-tint: #DCEBFB;
+    --blue-ink: #2C6CB0;
+    --gold: #F6E7B4;
+    --gold-ink: #8A6D1D;
+    --lav: #E6E0FB;
+    --lav-ink: #6C4FD6;
+  }
+
+  .turning-points-carousel-section {
+    position: relative;
+    width: 100%;
+    margin: 20px 0 10px;
+  }
+
+  .stage {
+    position: relative;
+    height: 400px;
+    perspective: 1000px;
+    perspective-origin: 50% 45%;
+    margin: 0 auto;
+    max-width: 900px;
+  }
+
+  .drum {
+    position: absolute;
+    inset: 0;
+    transform-style: preserve-3d;
+    animation: rotateYDrum 32s linear infinite;
+  }
+
+  .stage:hover .drum {
+    animation-play-state: paused;
+  }
+
+  @keyframes rotateYDrum {
+    0% { transform: rotateY(0deg); }
+    100% { transform: rotateY(-360deg); }
+  }
+
+  .drum-slot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -105px 0 0 -105px;
+    width: 210px;
+    height: 210px;
+    transform-style: preserve-3d;
+  }
+
+  .drum-card {
+    position: absolute;
+    inset: 0;
+    width: 210px;
+    height: 210px;
+    background: var(--panel);
+    border: 2px solid var(--ink);
+    border-radius: 16px;
+    box-shadow: 6px 6px 0 rgba(20, 18, 12, 0.85);
+    padding: 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    user-select: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .drum-card.card-4 {
+    background: var(--gold);
+  }
+
+  .drum-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .drum-badge {
+    font-family: 'Courier New', 'IBM Plex Mono', monospace;
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: 20px;
+    border: 1.5px solid;
+    padding: 3px 8px;
+    display: inline-block;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  .badge-rose {
+    background: var(--rose);
+    color: var(--rose-ink);
+    border-color: var(--rose-ink);
+  }
+
+  .badge-blue {
+    background: var(--blue-tint);
+    color: var(--blue-ink);
+    border-color: var(--blue-ink);
+  }
+
+  .badge-gold {
+    background: var(--gold);
+    color: var(--gold-ink);
+    border-color: var(--gold-ink);
+  }
+
+  .badge-lavender {
+    background: var(--lav);
+    color: var(--lav-ink);
+    border-color: var(--lav-ink);
+  }
+
+  .drum-meta {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+
+  .drum-card-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 14.5px;
+    font-weight: 700;
+    line-height: 1.25;
+    color: var(--ink);
+    margin: 0 0 6px 0;
+  }
+
+  .drum-card-body {
+    font-family: 'Inter', sans-serif;
+    font-size: 11.5px;
+    line-height: 1.4;
+    color: var(--muted);
+    font-weight: 400;
+    margin: 0;
+  }
+
+  .drum-card-body strong {
+    color: var(--ink);
+  }
+
+  .to-line {
+    display: block;
+    margin-top: 3px;
+    font-weight: 700;
+    color: var(--lav-ink);
+  }
+
+  .drum-card-arrow-btn {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+    min-height: 26px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 2px solid var(--ink);
+    background: linear-gradient(135deg, #ffffff, var(--rose) 140%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    align-self: flex-end;
+    margin-top: 4px;
+    cursor: pointer;
+    transition: transform 0.15s ease;
+  }
+
+  .drum-card-arrow-btn:hover {
+    transform: scale(1.12);
+  }
+
+  .drum-ground-shadow {
+    position: absolute;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 440px;
+    height: 30px;
+    border-radius: 50%;
+    background: radial-gradient(ellipse at center, rgba(20, 18, 12, 0.18) 0%, rgba(20, 18, 12, 0) 70%);
+    filter: blur(2px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .drum-hint {
+    text-align: center;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+    font-weight: 500;
+    margin-top: 12px;
+  }
+  /* Typewriter Intro Styles */
+  #cinematicIntroOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at center, #1c1f28 0%, #0c0d11 100%);
+    box-shadow: inset 0 0 120px rgba(0,0,0,0.85);
+    overflow: hidden;
+    opacity: 1;
+    transition: opacity 0.8s ease;
+  }
+
+  .typewriter-container {
+    max-width: 820px;
+    padding: 28px;
+    text-align: center;
+  }
+
+  .intro-start-prompt {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--yellow);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    padding: 10px 22px;
+    border: 2px dashed var(--yellow);
+    border-radius: 100px;
+    margin-bottom: 24px;
+    display: inline-block;
+    transition: all 0.2s ease;
+    animation: pulsePrompt 1.4s infinite alternate;
+  }
+
+  .intro-start-prompt:hover {
+    background: var(--yellow);
+    color: var(--ink);
+  }
+
+  @keyframes pulsePrompt {
+    0% { opacity: 0.7; transform: scale(0.97); }
+    100% { opacity: 1; transform: scale(1.03); }
+  }
+
+  .typewriter-text {
+    font-family: 'Fraunces', serif;
+    font-weight: 500;
+    font-size: clamp(22px, 3.8vw, 36px);
+    color: #FAF6EC;
+    letter-spacing: -0.01em;
+    line-height: 1.4;
+  }
+
+  .typewriter-cursor {
+    font-family: 'Fraunces', serif;
+    font-weight: 300;
+    font-size: clamp(22px, 3.8vw, 36px);
+    color: var(--yellow);
+    margin-left: 2px;
+    animation: blinkCursor 0.7s infinite;
+  }
+
+  @keyframes blinkCursor {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
   }
 </style>
 </head>
 <body>
+
+<!-- Typewriter Intro Sequence Overlay -->
+<div id="cinematicIntroOverlay" style="display:none;" onclick="initAudioContext()">
+  <div class="typewriter-container">
+    <div id="introStartPrompt" class="intro-start-prompt" style="display:none;">Click anywhere to start</div>
+    <div>
+      <span id="typewriterText" class="typewriter-text"></span><span id="typewriterCursor" class="typewriter-cursor">|</span>
+    </div>
+  </div>
+</div>
 
 <div class="glow glow-1"></div>
 <div class="glow glow-2"></div>
@@ -558,7 +1037,7 @@
 
 <header>
   <div class="nav">
-    <a href="#" class="logo"><span class="logo-mark">P</span>PaperDeck</a>
+    <a href="#" class="logo"><img src="/static/logo.png" class="logo-mark" alt="Logo">PaperDeck</a>
     <nav class="nav-links">
       <a href="#analyze">Try it</a>
       <a href="#research-evolution-section">Research Evolution</a>
@@ -579,7 +1058,7 @@
         <button class="tab-btn active" id="tab-topic" onclick="switchTab('topic')">Research topic</button>
         <button class="tab-btn" id="tab-pdf" onclick="switchTab('pdf')">Upload PDF</button>
       </div>
-      <input type="text" class="topic-input" id="topicInput" placeholder="Enter a research topic…" value="Retrieval Augmented Generation">
+      <input type="text" class="topic-input" id="topicInput" placeholder="Enter research topic..." value="">
       <div class="dropzone" id="dropzone">
         <input type="file" id="pdfInput" accept="application/pdf" style="display:none;">
         <div id="dropzoneEmpty">
@@ -707,7 +1186,7 @@
           <div class="citation-info-panel" id="citation-info-panel">
             <div style="text-align: center; padding: 40px 10px; color: var(--text-soft);">
               <div style="font-family: 'Space Grotesk'; font-size: 16px; font-weight: 700; margin-bottom: 8px;">Select a Node</div>
-              <p style="font-size: 13px;">Click any paper node in the citation graph to view metadata, abstract, DOI, and ask RAG questions.</p>
+              <p style="font-size: 13px;">Click any paper node in the citation graph to view metadata, abstract, DOI, and ask questions.</p>
             </div>
           </div>
         </div>
@@ -719,26 +1198,23 @@
         <p style="font-size:13px; color:var(--text-soft); font-weight:500; margin-top:4px;">Ask follow-up questions answered strictly from the vector-indexed papers.</p>
         <div class="qa-input-row">
           <input type="text" class="qa-input" id="qaInput" placeholder="e.g., What are the main trade-offs mentioned?" onkeydown="if(event.key==='Enter') askQuestion()">
-          <button class="qa-btn" id="qaBtn" onclick="askQuestion()">Ask RAG</button>
+          <button class="qa-btn" id="qaBtn" onclick="askQuestion()">Ask</button>
         </div>
         <div class="qa-answer" id="qaAnswer"></div>
       </div>
 
       <!-- Research Evolution Timeline Section -->
       <div class="evolution-panel" id="research-evolution-section" style="margin-top: 36px; padding: 28px; background: var(--paper); border: var(--bw) solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow-lg);">
-        <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 24px; border-bottom: 2.5px solid var(--ink); padding-bottom: 16px;">
-          <div>
-            <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 24px; font-weight: 700; color: var(--ink);">Research Evolution Timeline</h3>
+        <div style="border-bottom: 2px solid var(--ink); padding-bottom: 12px; margin-bottom: 20px;">
+          <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 30px; font-weight: 700; letter-spacing: -0.01em; color: var(--ink); margin: 0 0 10px 0;">Research Evolution Timeline</h2>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--rose-ink); border: 1.5px solid var(--ink); display: inline-block;"></span>
+            <span style="font-family: 'Space Grotesk', sans-serif; font-weight: 700; font-size: 15px; color: var(--ink);">Key Turning Points</span>
           </div>
         </div>
 
-        <!-- Section 1: Key Turning Points -->
-        <div style="margin-bottom: 32px;">
-          <h4 style="font-family: 'Space Grotesk'; font-size: 18px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
-            <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--pink); border: 1.5px solid var(--ink);"></span> Key Turning Points
-          </h4>
-          <div id="evolutionTurningPoints" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;"></div>
-        </div>
+        <!-- Section 1: Key Turning Points 3D Carousel -->
+        <div id="evolutionTurningPoints" style="margin-bottom: 32px;"></div>
 
         <!-- Section 2: Interactive Chronological Timeline -->
         <div style="margin-bottom: 36px; position: relative;">
@@ -757,7 +1233,36 @@
           <h4 style="font-family: 'Space Grotesk'; font-size: 18px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
             <span style="width: 10px; height: 10px; border-radius: 50%; background: var(--blue); border: 1.5px solid var(--ink);"></span> Evolution Summary
           </h4>
-          <div id="evolutionSummaryBox" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;"></div>
+          <div id="evolutionSummaryBox">
+            <div id="solitaireDeck" class="solitaire-deck-container" onclick="dealSolitaireDeck()">
+              <!-- Card 1: Major Breakthroughs (Top card in stack, Left slot when dealt) -->
+              <div class="solitaire-card card-breakthroughs">
+                <div class="solitaire-card-tag">MAJOR BREAKTHROUGHS</div>
+                <div class="solitaire-card-title">Major Breakthroughs</div>
+                <div class="solitaire-card-body" id="breakthroughsBody">
+                  Key paradigm shifts include self-attention mechanisms replacing recurrence, sparse mixture-of-experts for efficiency, and scalable direct preference optimization.
+                </div>
+              </div>
+
+              <!-- Card 2: Current State of Research (Middle card in stack, Right slot when dealt) -->
+              <div class="solitaire-card card-current-state">
+                <div class="solitaire-card-tag">CURRENT STATE</div>
+                <div class="solitaire-card-title">Current State of Research</div>
+                <div class="solitaire-card-body" id="currentStateBody">
+                  Active focus centers on long-context retrieval-augmented generation, reasoning model distillation, and robust evaluation benchmarks for complex tasks.
+                </div>
+              </div>
+
+              <!-- Card 3: Methodology Evolution (Bottom card in stack, Center slot when dealt) -->
+              <div class="solitaire-card card-methodology">
+                <div class="solitaire-card-tag">METHODOLOGY EVOLUTION</div>
+                <div class="solitaire-card-title">Methodology Evolution</div>
+                <div class="solitaire-card-body" id="methodologyBody">
+                  Transitioned from dense fine-tuning to parameter-efficient adapters (LoRA) and multi-modal alignment, reducing compute requirements significantly.
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -805,14 +1310,15 @@
 
 <footer id="team">
   <div class="wrap footer-inner">
-    <div class="logo"><span class="logo-mark">P</span>PaperDeck</div>
+    <div class="logo"><img src="/static/logo.png" class="logo-mark" alt="Logo">PaperDeck</div>
     <div class="meta">Team James — Vidisha Jain · Muskan Khushi · Ananya Pathak · Ojas Omprakash Karole</div>
-    <div class="meta">Hackathon project, 2026</div>
   </div>
 </footer>
 
 <script>
   let selectedFile = null;
+  let currentPaperId = null;
+  let activeSearchId = 0;
 
   function switchTab(tab){
     const topicInput = document.getElementById('topicInput');
@@ -820,6 +1326,7 @@
     const tabTopic = document.getElementById('tab-topic');
     const tabPdf = document.getElementById('tab-pdf');
     hideError();
+    currentPaperId = null;
     if(tab === 'topic'){
       topicInput.style.display = 'block';
       dropzone.classList.remove('show');
@@ -847,6 +1354,7 @@
       return;
     }
     selectedFile = file;
+    currentPaperId = null;
     document.getElementById('fileName').textContent = file.name;
     document.getElementById('fileSize').textContent = formatFileSize(file.size);
     document.getElementById('dropzoneEmpty').style.display = 'none';
@@ -855,47 +1363,53 @@
 
   function clearSelectedFile(){
     selectedFile = null;
+    currentPaperId = null;
     document.getElementById('pdfInput').value = '';
     document.getElementById('dropzoneEmpty').style.display = 'block';
     document.getElementById('dropzoneFile').classList.remove('show');
   }
 
-  (function initDropzone(){
+  window.addEventListener('DOMContentLoaded', () => {
     const dropzone = document.getElementById('dropzone');
     const input = document.getElementById('pdfInput');
+    const fileRemove = document.getElementById('fileRemove');
 
-    dropzone.addEventListener('click', (e) => {
-      if(e.target.closest('.file-remove')) return;
-      if(dropzone.classList.contains('drag-active')) return;
-      input.click();
-    });
-
-    input.addEventListener('change', (e) => {
-      if(e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
-    });
-
-    ['dragenter', 'dragover'].forEach(evt => {
-      dropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        dropzone.classList.add('drag-active');
+    if (dropzone && input) {
+      dropzone.addEventListener('click', (e) => {
+        if(e.target.closest('.file-remove')) return;
+        if(dropzone.classList.contains('drag-active')) return;
+        input.click();
       });
-    });
-    ['dragleave', 'drop'].forEach(evt => {
-      dropzone.addEventListener(evt, (e) => {
-        e.preventDefault();
-        dropzone.classList.remove('drag-active');
-      });
-    });
-    dropzone.addEventListener('drop', (e) => {
-      const file = e.dataTransfer.files && e.dataTransfer.files[0];
-      if(file) setSelectedFile(file);
-    });
 
-    document.getElementById('fileRemove').addEventListener('click', (e) => {
-      e.stopPropagation();
-      clearSelectedFile();
-    });
-  })();
+      input.addEventListener('change', (e) => {
+        if(e.target.files && e.target.files[0]) setSelectedFile(e.target.files[0]);
+      });
+
+      ['dragenter', 'dragover'].forEach(evt => {
+        dropzone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropzone.classList.add('drag-active');
+        });
+      });
+      ['dragleave', 'drop'].forEach(evt => {
+        dropzone.addEventListener(evt, (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('drag-active');
+        });
+      });
+      dropzone.addEventListener('drop', (e) => {
+        const file = e.dataTransfer.files && e.dataTransfer.files[0];
+        if(file) setSelectedFile(file);
+      });
+    }
+
+    if (fileRemove) {
+      fileRemove.addEventListener('click', (e) => {
+        e.stopPropagation();
+        clearSelectedFile();
+      });
+    }
+  });
 
   function showError(message){
     const banner = document.getElementById('errorBanner');
@@ -1152,15 +1666,31 @@
       return;
     }
 
+    activeSearchId += 1;
+    const currentSearchId = activeSearchId;
+
     btn.classList.add('loading');
     btn.disabled = true;
     results.classList.remove('show');
+
+    // Clear previous DOM results so old topics don't persist
+    document.getElementById('resultSummary').textContent = 'Analyzing document and generating grounded insights...';
+    document.getElementById('resultFindings').innerHTML = '';
+    document.getElementById('resultGaps').innerHTML = '';
+    document.getElementById('resultIdeas').innerHTML = '';
+    document.getElementById('sourcesGrid').innerHTML = '';
+    document.getElementById('noveltyBanner').style.display = 'none';
+    const tpCont = document.getElementById('evolutionTurningPoints'); if (tpCont) tpCont.innerHTML = getTurningPointsDrumHtml();
+    const tnCont = document.getElementById('evolutionTimelineNodes'); if (tnCont) tnCont.innerHTML = '';
+    const esCont = document.getElementById('evolutionSummaryBox'); if (esCont) esCont.innerHTML = getSolitaireDeckHtml();
+    const qaAns = document.getElementById('qaAnswer'); if (qaAns) { qaAns.innerHTML = ''; qaAns.classList.remove('show'); }
 
     try{
       let subject = topic;
       let totalPapers = 0;
 
       if(isTopicMode){
+        currentPaperId = null;
         updateStatus('Step 1/3: Searching arXiv & indexing vector embeddings…');
         const ingestResp = await fetch('/ingest/query', {
           method: 'POST',
@@ -1186,21 +1716,27 @@
         if(!uploadResp.ok){
           throw new Error('PDF upload failed (' + uploadResp.status + ').');
         }
+        const uploadData = await uploadResp.json();
+        currentPaperId = uploadData.paper_id;
         totalPapers = 1;
       }
+
+      if (currentSearchId !== activeSearchId) return; // Stale request superseded by newer search
 
       updateStatus('Step 2/3: Generating research insights & structuring gaps…');
       
       const insightsResp = await fetch('/insights/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: subject, top_k: 5 })
+        body: JSON.stringify({ topic: subject, paper_id: currentPaperId, top_k: 5 })
       });
 
       if(!insightsResp.ok){
         throw new Error('Insight generation failed (' + insightsResp.status + ').');
       }
       const data = await insightsResp.json();
+
+      if (currentSearchId !== activeSearchId) return;
 
       updateStatus('Step 3/3: Evaluating key findings & novelty score…');
       let findingsData = null;
@@ -1210,7 +1746,7 @@
         const fResp = await fetch('/insights/findings', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: subject, top_k: 5 })
+          body: JSON.stringify({ topic: subject, paper_id: currentPaperId, top_k: 5 })
         });
         if (fResp.ok) findingsData = await fResp.json();
       } catch(e) {}
@@ -1219,10 +1755,12 @@
         const nResp = await fetch('/insights/novelty', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ topic: subject, top_k: 5 })
+          body: JSON.stringify({ topic: subject, paper_id: currentPaperId, top_k: 5 })
         });
         if (nResp.ok) noveltyData = await nResp.json();
       } catch(e) {}
+
+      if (currentSearchId !== activeSearchId) return;
 
       document.getElementById('papersIngestedCount').textContent = totalPapers + ' papers indexed';
       document.getElementById('resultSummary').textContent = data.summary || data.report || 'Analysis complete.';
@@ -1233,8 +1771,14 @@
       renderIdeas(data.ideas);
       renderSources(data.sources);
 
-      // Trigger Citation Network reload for the current topic/papers
-      loadCitationNetwork(subject);
+      // Trigger Citation Network and Research Evolution Timeline reload for the current topic/paper
+      try {
+        if (typeof loadCitationNetwork === 'function') loadCitationNetwork(subject, currentSearchId);
+      } catch (e) { console.error(e); }
+
+      try {
+        if (typeof loadEvolutionTimeline === 'function') loadEvolutionTimeline(subject, currentSearchId);
+      } catch (e) { console.error(e); }
 
       results.classList.add('show');
       results.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -1264,7 +1808,7 @@
       const resp = await fetch('/query', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: queryText })
+        body: JSON.stringify({ query: queryText, paper_id: currentPaperId })
       });
       if(!resp.ok) throw new Error('Query failed.');
       const data = await resp.json();
@@ -1297,7 +1841,7 @@
       answerEl.classList.add('show');
     } finally {
       qBtn.disabled = false;
-      qBtn.textContent = 'Ask RAG';
+      qBtn.textContent = 'Ask';
     }
   }
   // ---------- Idea Expansion & Lineage Tree Functions ----------
@@ -1399,22 +1943,338 @@
   let cyInstance = null;
   let currentLayoutName = 'cose';
 
-  async function loadCitationNetwork(topic = '') {
+  async function loadCitationNetwork(topic = '', requestId = null) {
     try {
-      const targetTopic = topic || document.getElementById('topicInput')?.value || 'Retrieval Augmented Generation';
+      const targetTopic = topic || document.getElementById('topicInput')?.value || '';
       const badge = document.getElementById('graphTopicBadge');
-      if (badge) badge.textContent = targetTopic.length > 22 ? targetTopic.substring(0, 20) + '...' : targetTopic;
+      if (badge) badge.textContent = targetTopic ? (targetTopic.length > 22 ? targetTopic.substring(0, 20) + '...' : targetTopic) : 'Document Network';
 
       const resp = await fetch('/papers/citation-network', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: targetTopic })
+        body: JSON.stringify({ topic: targetTopic, paper_id: currentPaperId })
       });
+      if (requestId && requestId !== activeSearchId) return;
       if (!resp.ok) throw new Error('Failed to load citation network (' + resp.status + ').');
       const data = await resp.json();
+      if (requestId && requestId !== activeSearchId) return;
       renderCytoscapeGraph(data);
     } catch (err) {
       console.error('Citation Network Error:', err);
+    }
+  }
+
+  async function loadEvolutionTimeline(topicOverride, requestId = null) {
+    const topic = topicOverride || document.getElementById('topicInput')?.value || "";
+    if (!topic && !currentPaperId) {
+      renderEvolutionTimeline(null);
+      return;
+    }
+    try {
+      const res = await fetch('/insights/timeline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ topic: topic, paper_id: currentPaperId })
+      });
+      if (requestId && requestId !== activeSearchId) return;
+      if (res.ok) {
+        const data = await res.json();
+        currentEvolutionData = (data && data.papers && data.papers.length > 0) ? data : null;
+      } else {
+        currentEvolutionData = null;
+      }
+    } catch (e) {
+      currentEvolutionData = null;
+    }
+    if (requestId && requestId !== activeSearchId) return;
+    renderEvolutionTimeline(currentEvolutionData);
+  }
+
+  function dealSolitaireDeck() {
+    const deck = document.getElementById('solitaireDeck');
+    if (deck && !deck.classList.contains('dealt')) {
+      deck.classList.add('dealt');
+    }
+  }
+
+  function getSolitaireDeckHtml(summary = null) {
+    const breakthroughsText = (summary && summary.major_breakthroughs && summary.major_breakthroughs.length > 0)
+      ? `<ul style="list-style:disc; padding-left:16px; margin:0;">${summary.major_breakthroughs.map(b => `<li style="margin-bottom:6px;">${escapeHtml(b)}</li>`).join('')}</ul>`
+      : `Key paradigm shifts include self-attention mechanisms replacing recurrence, sparse mixture-of-experts for efficiency, and scalable direct preference optimization.`;
+
+    const methodologyText = (summary && summary.methodology_evolution)
+      ? escapeHtml(summary.methodology_evolution)
+      : `Transitioned from dense fine-tuning to parameter-efficient adapters (LoRA) and multi-modal alignment, reducing compute requirements significantly.`;
+
+    const currentStateText = (summary && summary.current_state)
+      ? escapeHtml(summary.current_state)
+      : `Active focus centers on long-context retrieval-augmented generation, reasoning model distillation, and robust evaluation benchmarks for complex tasks.`;
+
+    return `
+      <div id="solitaireDeck" class="solitaire-deck-container" onclick="dealSolitaireDeck()">
+        <!-- Card 1: Major Breakthroughs (Top card in stack, Left slot when dealt) -->
+        <div class="solitaire-card card-breakthroughs">
+          <div class="solitaire-card-tag">MAJOR BREAKTHROUGHS</div>
+          <div class="solitaire-card-title">Major Breakthroughs</div>
+          <div class="solitaire-card-body" id="breakthroughsBody">${breakthroughsText}</div>
+        </div>
+
+        <!-- Card 2: Current State of Research (Middle card in stack, Right slot when dealt) -->
+        <div class="solitaire-card card-current-state">
+          <div class="solitaire-card-tag">CURRENT STATE</div>
+          <div class="solitaire-card-title">Current State of Research</div>
+          <div class="solitaire-card-body" id="currentStateBody">${currentStateText}</div>
+        </div>
+
+        <!-- Card 3: Methodology Evolution (Bottom card in stack, Center slot when dealt) -->
+        <div class="solitaire-card card-methodology">
+          <div class="solitaire-card-tag">METHODOLOGY EVOLUTION</div>
+          <div class="solitaire-card-title">Methodology Evolution</div>
+          <div class="solitaire-card-body" id="methodologyBody">${methodologyText}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  function getTurningPointsDrumHtml(tpData = null) {
+    const tp = tpData || {};
+    
+    // Card 1 Data
+    const c1Title = tp.most_influential_paper?.title || "AR-RAG: Autoregressive Retrieval Augmentation for Image Generation";
+    const c1Year = tp.most_influential_paper?.year || "2025";
+    const c1Body = tp.most_influential_paper?.reason || "Introduced autoregressive retrieval augmentation for image generation";
+    const c1Id = tp.most_influential_paper?.id || "";
+
+    // Card 2 Data
+    const c2Title = tp.most_cited_paper?.title || "AR-RAG: Autoregressive Retrieval Augmentation for Image Generation";
+    const c2Cites = tp.most_cited_paper?.citation_count ? `${tp.most_cited_paper.citation_count.toLocaleString()} Cites` : "100 Cites";
+    const c2Body = "Benchmark paper driving significant citation volume and academic derivative research.";
+    const c2Id = tp.most_cited_paper?.id || "";
+
+    // Card 3 Data
+    const c3Year = tp.biggest_methodology_shift?.year || "2020";
+    const c3Title = tp.biggest_methodology_shift?.title || "Shift from Simple Retrieval Approaches to Adaptive Retrieval Pipelines";
+    const c3From = tp.biggest_methodology_shift?.from_method || "Simple retrieval approaches";
+    const c3To = tp.biggest_methodology_shift?.to_method || "Adaptive retrieval pipelines";
+
+    // Card 4 Data
+    const c4Trend = tp.emerging_trend?.trend || "Autoregressive Retrieval Augmentation";
+    const c4Body = tp.emerging_trend?.description || "Autoregressive retrieval augmentation has shown promising results in image generation and is expected to be a major trend in the field";
+
+    const cards = [
+      // Card 1
+      `
+        <div class="drum-card card-1" ${c1Id ? `onclick="openPaperById('${c1Id}')"` : ''}>
+          <div>
+            <div class="drum-card-header">
+              <span class="drum-badge badge-rose">MOST INFLUENTIAL</span>
+              <span class="drum-meta">${escapeHtml(String(c1Year))}</span>
+            </div>
+            <h3 class="drum-card-title">${escapeHtml(c1Title)}</h3>
+            <p class="drum-card-body">${escapeHtml(c1Body)}</p>
+          </div>
+          <div class="drum-card-arrow-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+        </div>
+      `,
+      // Card 2
+      `
+        <div class="drum-card card-2" ${c2Id ? `onclick="openPaperById('${c2Id}')"` : ''}>
+          <div>
+            <div class="drum-card-header">
+              <span class="drum-badge badge-blue">MOST CITED</span>
+              <span class="drum-meta">${escapeHtml(String(c2Cites))}</span>
+            </div>
+            <h3 class="drum-card-title">${escapeHtml(c2Title)}</h3>
+            <p class="drum-card-body">${escapeHtml(c2Body)}</p>
+          </div>
+          <div class="drum-card-arrow-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+          </div>
+        </div>
+      `,
+      // Card 3
+      `
+        <div class="drum-card card-3">
+          <div>
+            <div class="drum-card-header">
+              <span class="drum-badge badge-gold">METHODOLOGY SHIFT (${escapeHtml(String(c3Year))})</span>
+            </div>
+            <h3 class="drum-card-title">${escapeHtml(c3Title)}</h3>
+            <p class="drum-card-body">
+              <strong>From:</strong> ${escapeHtml(c3From)}
+              <span class="to-line">To: ${escapeHtml(c3To)}</span>
+            </p>
+          </div>
+        </div>
+      `,
+      // Card 4
+      `
+        <div class="drum-card card-4">
+          <div>
+            <div class="drum-card-header">
+              <span class="drum-badge badge-lavender">EMERGING TREND</span>
+            </div>
+            <h3 class="drum-card-title">${escapeHtml(c4Trend)}</h3>
+            <p class="drum-card-body">${escapeHtml(c4Body)}</p>
+          </div>
+        </div>
+      `
+    ];
+
+    const all8Slots = [...cards, ...cards];
+    const slotsHtml = all8Slots.map((cardHtml, idx) => {
+      const angle = (360 / 8) * idx;
+      return `
+        <div class="drum-slot" style="transform: rotateY(${angle}deg) translateZ(300px);">
+          ${cardHtml}
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="turning-points-carousel-section">
+        <div class="stage">
+          <div class="drum">
+            ${slotsHtml}
+          </div>
+          <div class="drum-ground-shadow"></div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderEvolutionTimeline(data) {
+    const tpContainer = document.getElementById('evolutionTurningPoints');
+    const nodesContainer = document.getElementById('evolutionTimelineNodes');
+    const summaryBox = document.getElementById('evolutionSummaryBox');
+
+    if (!data || !data.papers || data.papers.length === 0) {
+      if (tpContainer) tpContainer.innerHTML = getTurningPointsDrumHtml(null);
+      if (nodesContainer) nodesContainer.innerHTML = '<div style="color:var(--text-soft); font-size:13px; padding-left: 20px;">Timeline milestones will appear here after analysis.</div>';
+      if (summaryBox && !document.getElementById('solitaireDeck')) {
+        summaryBox.innerHTML = getSolitaireDeckHtml();
+      }
+      return;
+    }
+
+    // 1. Key Turning Points 3D Carousel
+    if (tpContainer) {
+      tpContainer.innerHTML = getTurningPointsDrumHtml(data.turning_points);
+    }
+
+    // 2. Timeline Nodes
+    if (nodesContainer && data.papers) {
+      const sorted = [...data.papers].sort((a, b) => a.year - b.year);
+      nodesContainer.innerHTML = sorted.map((p, idx) => `
+        <div onclick="openPaperModalIndex(${idx})" style="position: relative; margin-bottom: 24px; padding-left: 48px; cursor: pointer;">
+          <!-- Node Dot -->
+          <div style="position: absolute; left: 16px; top: 12px; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: var(--yellow); border: 2.5px solid var(--ink); box-shadow: 2px 2px 0px var(--ink); z-index: 2; transition: transform .15s;" onmouseover="this.style.transform='translateX(-50%) scale(1.3)'" onmouseout="this.style.transform='translateX(-50%) scale(1)'"></div>
+          
+          <!-- Node Card -->
+          <div style="background: var(--paper); border: 2.5px solid var(--ink); border-radius: 14px; padding: 18px; box-shadow: 5px 5px 0px var(--ink); transition: transform .15s, box-shadow .15s;" onmouseover="this.style.transform='translate(-2px,-2px)'; this.style.boxShadow='7px 7px 0px var(--ink)'" onmouseout="this.style.transform='none'; this.style.boxShadow='5px 5px 0px var(--ink)'">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+              <span class="badge-severity badge-medium" style="margin: 0; font-size: 11px;">YEAR ${p.year}</span>
+              <span style="font-family: 'IBM Plex Mono'; font-size: 11.5px; font-weight: 700; color: var(--purple);">${(p.citation_count || 0).toLocaleString()} Citations</span>
+            </div>
+            <h5 style="font-family: 'Space Grotesk'; font-size: 16.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px;">${escapeHtml(p.title)}</h5>
+            <p style="font-size: 13px; color: var(--text-soft); font-weight: 500; margin-bottom: 8px;">${escapeHtml(p.contribution)}</p>
+            <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; font-family: 'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: var(--purple); margin-top: 10px;">
+              <span style="flex: 1; min-width: 0; word-break: break-word; line-height: 1.4;">Authors: ${escapeHtml((p.authors || []).join(', '))}</span>
+              <span style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; background: var(--pastel-purple); border: 2px solid var(--ink); display: inline-flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0px var(--ink); color: var(--ink);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // 3. Evolution Summary
+    if (summaryBox) {
+      const sum = data ? data.summary : null;
+      const deck = document.getElementById('solitaireDeck');
+      if (!deck) {
+        summaryBox.innerHTML = getSolitaireDeckHtml(sum);
+      } else if (sum) {
+        const btBody = document.getElementById('breakthroughsBody');
+        const csBody = document.getElementById('currentStateBody');
+        const meBody = document.getElementById('methodologyBody');
+
+        if (btBody && sum.major_breakthroughs && sum.major_breakthroughs.length > 0) {
+          btBody.innerHTML = `<ul style="list-style:disc; padding-left:16px; margin:0;">${sum.major_breakthroughs.map(b => `<li style="margin-bottom:6px;">${escapeHtml(b)}</li>`).join('')}</ul>`;
+        }
+        if (csBody && sum.current_state) {
+          csBody.textContent = sum.current_state;
+        }
+        if (meBody && sum.methodology_evolution) {
+          meBody.textContent = sum.methodology_evolution;
+        }
+      }
+    }
+  }
+
+  function openPaperModalIndex(idx) {
+    if (!currentEvolutionData || !currentEvolutionData.papers) return;
+    const sorted = [...currentEvolutionData.papers].sort((a, b) => a.year - b.year);
+    const paper = sorted[idx];
+    if (paper) showPaperModalDetails(paper);
+  }
+
+  function openPaperById(id) {
+    if (!currentEvolutionData || !currentEvolutionData.papers) return;
+    const paper = currentEvolutionData.papers.find(p => p.id === id);
+    if (paper) showPaperModalDetails(paper);
+  }
+
+  function showPaperModalDetails(paper) {
+    const modal = document.getElementById('paperEvolutionModal');
+    const content = document.getElementById('paperEvolutionModalContent');
+    if (!modal || !content) return;
+
+    content.innerHTML = `
+      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+        <span class="badge-severity badge-medium" style="margin:0; font-size: 11px;">PUBLICATION YEAR ${paper.year}</span>
+        <span class="badge-severity badge-low" style="margin:0; font-size: 11px;">${(paper.citation_count || 0).toLocaleString()} CITATIONS</span>
+      </div>
+      <h3 style="font-family:'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 10px; line-height: 1.25;">${escapeHtml(paper.title)}</h3>
+      <p style="font-size: 13px; color: var(--text-soft); font-weight: 600; margin-bottom: 16px;"><strong>Authors:</strong> ${escapeHtml((paper.authors || []).join(', '))}</p>
+
+      <div style="display: grid; grid-template-columns: 1fr; gap: 14px; text-align: left;">
+        <div style="background: var(--pastel-purple); border: 2px solid var(--ink); border-radius: 12px; padding: 14px;">
+          <div style="font-family:'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: var(--purple); margin-bottom: 4px;">MAIN CONTRIBUTION</div>
+          <p style="font-size: 13.5px; color: var(--ink); font-weight: 500;">${escapeHtml(paper.contribution || 'N/A')}</p>
+        </div>
+
+        <div style="background: var(--pastel-blue); border: 2px solid var(--ink); border-radius: 12px; padding: 14px;">
+          <div style="font-family:'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: var(--blue); margin-bottom: 4px;">METHODOLOGY USED</div>
+          <p style="font-size: 13.5px; color: var(--ink); font-weight: 500;">${escapeHtml(paper.methodology || 'N/A')}</p>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <div style="background: var(--pastel-pink); border: 2px solid var(--ink); border-radius: 12px; padding: 14px;">
+            <div style="font-family:'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: #900; margin-bottom: 4px;">KEY LIMITATION</div>
+            <p style="font-size: 12.5px; color: var(--ink); font-weight: 500;">${escapeHtml(paper.limitation || 'N/A')}</p>
+          </div>
+
+          <div style="background: var(--pastel-green); border: 2px solid var(--ink); border-radius: 12px; padding: 14px;">
+            <div style="font-family:'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: #006020; margin-bottom: 4px;">FUTURE SCOPE</div>
+            <p style="font-size: 12.5px; color: var(--ink); font-weight: 500;">${escapeHtml(paper.future_scope || 'N/A')}</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    modal.style.display = 'flex';
+  }
+
+  function closePaperEvolutionModal() {
+    const modal = document.getElementById('paperEvolutionModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function handleEvolutionModalBackdrop(e) {
+    if (e.target.id === 'paperEvolutionModal') {
+      closePaperEvolutionModal();
     }
   }
 
@@ -1422,8 +2282,20 @@
     const container = document.getElementById('cy');
     if (!container || typeof cytoscape === 'undefined') return;
 
-    const nodes = data.nodes || [];
-    const edges = data.edges || [];
+    const nodes = data ? (data.nodes || []) : [];
+    const edges = data ? (data.edges || []) : [];
+
+    if (nodes.length === 0) {
+      if (cyInstance) { cyInstance.destroy(); cyInstance = null; }
+      container.innerHTML = '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--text-soft); font-family:\'Space Grotesk\'; font-weight:600; font-size:14px; text-align:center; padding:20px;">Upload a PDF or enter a research topic above and click Analyze to generate the Citation Network.</div>';
+      const nodesEl = document.getElementById('graphStatNodes');
+      const edgesEl = document.getElementById('graphStatEdges');
+      const topEl = document.getElementById('graphStatTop');
+      if (nodesEl) nodesEl.textContent = '0 NODES';
+      if (edgesEl) edgesEl.textContent = '0 EDGES';
+      if (topEl) topEl.textContent = 'TOP: 0 CITES';
+      return;
+    }
 
     // Update live graph stats
     const maxCites = Math.max(...nodes.map(n => n.citation_count || 0), 0);
@@ -1677,7 +2549,7 @@
 
       <button class="ask-rag-panel-btn" onclick="askRAGForPaper('${titleAttr.replace(/'/g, "\\'")}')">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-        Ask RAG About Paper
+        Ask About Paper
       </button>
     `;
   }
@@ -1725,9 +2597,7 @@
   }
 
   window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      loadCitationNetwork();
-    }, 400);
+    // Initial state: waiting for user input or PDF upload
   });
 </script>
 
@@ -1738,318 +2608,6 @@
     <div id="paperEvolutionModalContent"></div>
   </div>
 </div>
-
-<script>
-  let currentEvolutionData = null;
-
-  const mockTimelineDataset = {
-    topic: "Retrieval-Augmented Generation & Neural Memory Architecture",
-    papers: [
-      {
-        id: "paper-2017-01",
-        title: "Attention Is All You Need",
-        year: 2017,
-        authors: ["Vaswani et al."],
-        contribution: "Introduced the Transformer architecture based entirely on self-attention mechanisms.",
-        methodology: "Multi-Head Self-Attention layers combined with Positional Encodings for parallel sequence processing.",
-        limitation: "Quadratic computational scaling O(N^2) with sequence length and lack of persistent external memory.",
-        future_scope: "Exploration of sparse attention patterns, long-context window architectures, and external memory coupling.",
-        citation_count: 128450
-      },
-      {
-        id: "paper-2018-01",
-        title: "BERT: Pre-training of Deep Bidirectional Transformers",
-        year: 2018,
-        authors: ["Devlin et al."],
-        contribution: "Demonstrated deep bidirectional representations from unlabeled text using masked language modeling.",
-        methodology: "Masked Language Modeling (MLM) and Next Sentence Prediction (NSP) pre-training.",
-        limitation: "Static parametric memory cannot incorporate post-training knowledge without costly retraining.",
-        future_scope: "Dynamic parametric updating, fine-grained knowledge retrieval, and parameter-efficient tuning.",
-        citation_count: 98500
-      },
-      {
-        id: "paper-2020-01",
-        title: "Retrieval-Augmented Generation for Knowledge-Intensive NLP",
-        year: 2020,
-        authors: ["Lewis et al."],
-        contribution: "Pioneered RAG architectures combining parametric seq2seq models with non-parametric dense vector retrieval.",
-        methodology: "Dense Passage Retriever (DPR) combined with BART generator trained end-to-end.",
-        limitation: "High retrieval latency, fixed chunk granularity, and sensitivity to noise in retrieved passages.",
-        future_scope: "Iterative multi-step retrieval, query rewrite mechanisms, and active self-reflective retrieval.",
-        citation_count: 42100
-      },
-      {
-        id: "paper-2022-01",
-        title: "REPLUG: Retrieval-Augmented Black-Box Language Models",
-        year: 2022,
-        authors: ["Shi et al."],
-        contribution: "Enabled retrieval augmentation for proprietary black-box language models without modifying weights.",
-        methodology: "Ensemble perplexity scoring over prepended passage contexts with retriever supervision via LM feedback.",
-        limitation: "Context window saturation when incorporating multiple retrieved documents simultaneously.",
-        future_scope: "Hierarchical document compression, cross-document attention synthesis, and rank-aware prompting.",
-        citation_count: 14200
-      },
-      {
-        id: "paper-2023-01",
-        title: "Self-RAG: Learning to Retrieve, Generate, and Critique through Self-Reflection",
-        year: 2023,
-        authors: ["Asai et al."],
-        contribution: "Introduced dynamic self-reflective tokens for adaptive retrieval, critique, and hallucination suppression.",
-        methodology: "Specialized reflection tokens ([Retrieve], [IsRel], [IsSup], [IsUse]) learned via instruction fine-tuning.",
-        limitation: "Increased inference time due to multi-step reflection token generation and evaluation branches.",
-        future_scope: "Speculative reflection decoding, lightweight token classification heads, and streaming verification.",
-        citation_count: 1980
-      },
-      {
-        id: "paper-2024-01",
-        title: "GraphRAG: Unlocking LLM Discovery Over Enterprise Text Graphs",
-        year: 2024,
-        authors: ["Edge et al."],
-        contribution: "Combined Knowledge Graph extraction with community summary retrieval for global dataset query understanding.",
-        methodology: "LLM-driven entity-relationship extraction, Leiden community detection, and hierarchical graph summarization.",
-        limitation: "Heavy computational overhead during offline index construction and graph partitioning.",
-        future_scope: "Incremental real-time graph updates, hybrid dense-sparse graph neural indexing, and continuous graph reasoning.",
-        citation_count: 3150
-      },
-      {
-        id: "paper-2025-01",
-        title: "Agentic Dynamic Memory & Long-Horizon Research Lineage",
-        year: 2025,
-        authors: ["Vance et al."],
-        contribution: "Formulated autonomous memory trees that synthesize multi-paper lineage tracking and hypothesis generation.",
-        methodology: "Graph-based memory state vectors with real-time vector compaction and symbolic belief revision network.",
-        limitation: "State decay during long multi-hop reasoning loops across contradictory multi-domain sources.",
-        future_scope: "Quantum-inspired vector spaces, neural symbolic belief propagation, and persistent agent state sync.",
-        citation_count: 940
-      }
-    ],
-    summary: {
-      major_breakthroughs: [
-        "Transition from static parametric models (BERT) to dynamically augmented retrieval architectures (RAG).",
-        "Integration of self-reflective critique tokens allowing LLMs to autonomously determine when to retrieve.",
-        "Evolution from raw unstructured passage search to structured GraphRAG community summaries.",
-        "Emergence of agentic memory trees tracking long-horizon research lineage."
-      ],
-      methodology_evolution: "The domain evolved from early dense vector retrieval over static text chunks (2020) towards adaptive black-box LM prompting (2022), self-criticism tokens (2023), entity knowledge graph summarization (2024), and dynamic symbolic agent memory networks (2025).",
-      current_state: "Current research is focused on unified Graph-Dense hybrid indexing, real-time agent memory compaction, continuous zero-shot index updating, and autonomous hypothesis generation."
-    },
-    gaps: [
-      { id: "gap-1", title: "High Retrieval Noise & Context Contamination", description: "Dense retriever top-k passages frequently inject irrelevant or contradictory facts that pollute downstream reasoning.", severity: "High" },
-      { id: "gap-2", title: "Expensive Graph Indexing Overhead", description: "Extracting community summaries and hierarchical graph nodes requires prohibitive upfront LLM calls.", severity: "High" },
-      { id: "gap-3", title: "Lack of Multi-Hop Temporal Reasoning", description: "Existing RAG pipelines struggle to track how definitions and assumptions change across publication years.", severity: "Medium" },
-      { id: "gap-4", title: "Fine-Grained Citation Grounding", description: "Generated responses often cite an entire paper without pinpointing exact equations, figures, or table rows.", severity: "Medium" },
-      { id: "gap-5", title: "Static Index Knowledge Decay", description: "Vector database indices become obsolete when newer papers disprove prior assumptions.", severity: "Low" }
-    ],
-    turning_points: {
-      most_influential_paper: { id: "paper-2017-01", title: "Attention Is All You Need", reason: "Laid the fundamental architecture upon which all modern transformer-based language and retrieval models operate.", year: 2017 },
-      most_cited_paper: { id: "paper-2017-01", title: "Attention Is All You Need", citation_count: 128450, year: 2017 },
-      biggest_methodology_shift: { title: "From Unstructured Passage Chunks to Graph Knowledge Summaries", from_method: "Fixed-character text chunking & cosine vector search", to_method: "LLM entity extraction + Leiden community summarization (GraphRAG)", impact: "Unlocks global dataset-level synthesis rather than localized facts.", year: 2024 },
-      emerging_trend: { trend: "Self-Reflective Agentic Memory & Continuous Lineage Discovery", description: "Autonomous agents utilizing dynamic self-criticism tokens and graph memory trees to synthesize research directions.", key_papers: ["Self-RAG (2023)", "GraphRAG (2024)", "Agentic Memory (2025)"] }
-    }
-  };
-
-  async function loadEvolutionTimeline(topicOverride) {
-    const topic = topicOverride || document.getElementById('topicInput')?.value || "Retrieval Augmented Generation";
-    try {
-      const res = await fetch('/insights/timeline', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ topic: topic })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        if (data && data.papers && data.papers.length > 0) {
-          currentEvolutionData = data;
-        } else {
-          currentEvolutionData = mockTimelineDataset;
-        }
-      } else {
-        currentEvolutionData = mockTimelineDataset;
-      }
-    } catch (e) {
-      currentEvolutionData = mockTimelineDataset;
-    }
-    renderEvolutionTimeline(currentEvolutionData);
-  }
-
-  function renderEvolutionTimeline(data) {
-    if (!data) return;
-
-    // 1. Key Turning Points
-    const tpContainer = document.getElementById('evolutionTurningPoints');
-    if (tpContainer && data.turning_points) {
-      const tp = data.turning_points;
-      tpContainer.innerHTML = `
-        <div onclick="openPaperById('${tp.most_influential_paper?.id}')" style="background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; padding: 16px; box-shadow: 4px 4px 0px var(--ink); cursor: pointer; transition: transform .15s;" onmouseover="this.style.transform='translate(-2px,-2px)'" onmouseout="this.style.transform='none'">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge-severity badge-high" style="margin: 0;">MOST INFLUENTIAL</span>
-            <span style="font-family:'IBM Plex Mono'; font-size:11px; font-weight:700;">${tp.most_influential_paper?.year || 2017}</span>
-          </div>
-          <h5 style="font-family:'Space Grotesk'; font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px;">${escapeHtml(tp.most_influential_paper?.title || 'Foundational Study')}</h5>
-          <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:8px;">${escapeHtml(tp.most_influential_paper?.reason || '')}</p>
-          <div style="display: flex; justify-content: flex-end;">
-            <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--pastel-purple); border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0px var(--ink); color: var(--ink);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
-          </div>
-        </div>
-
-        <div onclick="openPaperById('${tp.most_cited_paper?.id}')" style="background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; padding: 16px; box-shadow: 4px 4px 0px var(--ink); cursor: pointer; transition: transform .15s;" onmouseover="this.style.transform='translate(-2px,-2px)'" onmouseout="this.style.transform='none'">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge-severity badge-low" style="margin: 0;">MOST CITED</span>
-            <span style="font-family:'IBM Plex Mono'; font-size:11px; font-weight:700;">${(tp.most_cited_paper?.citation_count || 0).toLocaleString()} Cites</span>
-          </div>
-          <h5 style="font-family:'Space Grotesk'; font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px;">${escapeHtml(tp.most_cited_paper?.title || 'Benchmark Paper')}</h5>
-          <p style="font-size:12.5px; color:var(--text-soft); margin-bottom:8px;">Benchmark paper driving significant citation volume and academic derivative research.</p>
-          <div style="display: flex; justify-content: flex-end;">
-            <span style="width: 28px; height: 28px; border-radius: 50%; background: var(--pastel-pink); border: 2px solid var(--ink); display: flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0px var(--ink); color: var(--ink);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
-          </div>
-        </div>
-
-        <div style="background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; padding: 16px; box-shadow: 4px 4px 0px var(--ink);">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge-severity badge-medium" style="margin: 0;">METHODOLOGY SHIFT (${tp.biggest_methodology_shift?.year || 2024})</span>
-          </div>
-          <h5 style="font-family:'Space Grotesk'; font-size:14.5px; font-weight:700; color:var(--ink); margin-bottom:6px;">${escapeHtml(tp.biggest_methodology_shift?.title || 'Shift')}</h5>
-          <p style="font-size:12px; color:var(--text-soft); margin-bottom:4px;"><strong>From:</strong> ${escapeHtml(tp.biggest_methodology_shift?.from_method || '')}</p>
-          <p style="font-size:12px; color:var(--purple); font-weight:600;"><strong>To:</strong> ${escapeHtml(tp.biggest_methodology_shift?.to_method || '')}</p>
-        </div>
-
-        <div style="background: var(--pastel-yellow); border: 2px solid var(--ink); border-radius: 12px; padding: 16px; box-shadow: 4px 4px 0px var(--ink);">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
-            <span class="badge-severity badge-low" style="margin: 0; background: var(--paper);">EMERGING TREND</span>
-          </div>
-          <h5 style="font-family:'Space Grotesk'; font-size:15px; font-weight:700; color:var(--ink); margin-bottom:6px;">${escapeHtml(tp.emerging_trend?.trend || '')}</h5>
-          <p style="font-size:12.5px; color:var(--text-soft);">${escapeHtml(tp.emerging_trend?.description || '')}</p>
-        </div>
-      `;
-    }
-
-    // 2. Timeline Nodes
-    const nodesContainer = document.getElementById('evolutionTimelineNodes');
-    if (nodesContainer && data.papers) {
-      const sorted = [...data.papers].sort((a, b) => a.year - b.year);
-      nodesContainer.innerHTML = sorted.map((p, idx) => `
-        <div onclick="openPaperModalIndex(${idx})" style="position: relative; margin-bottom: 24px; padding-left: 48px; cursor: pointer;">
-          <!-- Node Dot -->
-          <div style="position: absolute; left: 16px; top: 12px; transform: translateX(-50%); width: 20px; height: 20px; border-radius: 50%; background: var(--yellow); border: 2.5px solid var(--ink); box-shadow: 2px 2px 0px var(--ink); z-index: 2; transition: transform .15s;" onmouseover="this.style.transform='translateX(-50%) scale(1.3)'" onmouseout="this.style.transform='translateX(-50%) scale(1)'"></div>
-          
-          <!-- Node Card -->
-          <div style="background: var(--paper); border: 2.5px solid var(--ink); border-radius: 14px; padding: 18px; box-shadow: 5px 5px 0px var(--ink); transition: transform .15s, box-shadow .15s;" onmouseover="this.style.transform='translate(-2px,-2px)'; this.style.boxShadow='7px 7px 0px var(--ink)'" onmouseout="this.style.transform='none'; this.style.boxShadow='5px 5px 0px var(--ink)'">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span class="badge-severity badge-medium" style="margin: 0; font-size: 11px;">YEAR ${p.year}</span>
-              <span style="font-family: 'IBM Plex Mono'; font-size: 11.5px; font-weight: 700; color: var(--purple);">${(p.citation_count || 0).toLocaleString()} Citations</span>
-            </div>
-            <h5 style="font-family: 'Space Grotesk'; font-size: 16.5px; font-weight: 700; color: var(--ink); margin-bottom: 6px;">${escapeHtml(p.title)}</h5>
-            <p style="font-size: 13px; color: var(--text-soft); font-weight: 500; margin-bottom: 8px;">${escapeHtml(p.contribution)}</p>
-            <div style="display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; font-family: 'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: var(--purple); margin-top: 10px;">
-              <span style="flex: 1; min-width: 0; word-break: break-word; line-height: 1.4;">Authors: ${escapeHtml((p.authors || []).join(', '))}</span>
-              <span style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; flex-shrink: 0; border-radius: 50%; background: var(--pastel-purple); border: 2px solid var(--ink); display: inline-flex; align-items: center; justify-content: center; box-shadow: 2px 2px 0px var(--ink); color: var(--ink);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
-            </div>
-          </div>
-        </div>
-      `).join('');
-    }
-
-    // 3. Evolution Summary
-    const summaryBox = document.getElementById('evolutionSummaryBox');
-    if (summaryBox && data.summary) {
-      const sum = data.summary;
-      const breakthroughsHtml = (sum.major_breakthroughs || []).map(b => `<li style="margin-bottom:6px; font-size:13px; color:var(--ink);">${escapeHtml(b)}</li>`).join('');
-      summaryBox.innerHTML = `
-        <div style="background: var(--pastel-purple); border: 2px solid var(--ink); border-radius: 12px; padding: 18px; box-shadow: 4px 4px 0px var(--ink);">
-          <div style="font-family:'Space Grotesk'; font-size:15px; font-weight:700; color:var(--ink); margin-bottom:10px;">Major Breakthroughs</div>
-          <ul style="list-style:disc; padding-left:18px; margin:0;">${breakthroughsHtml}</ul>
-        </div>
-        <div style="background: var(--pastel-blue); border: 2px solid var(--ink); border-radius: 12px; padding: 18px; box-shadow: 4px 4px 0px var(--ink);">
-          <div style="font-family:'Space Grotesk'; font-size:15px; font-weight:700; color:var(--ink); margin-bottom:10px;">Methodology Evolution</div>
-          <p style="font-size:13px; color:var(--ink); font-weight:500;">${escapeHtml(sum.methodology_evolution || '')}</p>
-        </div>
-        <div style="background: var(--pastel-green); border: 2px solid var(--ink); border-radius: 12px; padding: 18px; box-shadow: 4px 4px 0px var(--ink);">
-          <div style="font-family:'Space Grotesk'; font-size:15px; font-weight:700; color:var(--ink); margin-bottom:10px;">Current State of Research</div>
-          <p style="font-size:13px; color:var(--ink); font-weight:500;">${escapeHtml(sum.current_state || '')}</p>
-        </div>
-      `;
-    }
-  }
-
-  function openPaperModalIndex(idx) {
-    if (!currentEvolutionData || !currentEvolutionData.papers) return;
-    const sorted = [...currentEvolutionData.papers].sort((a, b) => a.year - b.year);
-    const paper = sorted[idx];
-    if (paper) showPaperModalDetails(paper);
-  }
-
-  function openPaperById(id) {
-    if (!currentEvolutionData || !currentEvolutionData.papers) return;
-    const paper = currentEvolutionData.papers.find(p => p.id === id);
-    if (paper) showPaperModalDetails(paper);
-  }
-
-  function showPaperModalDetails(paper) {
-    const modal = document.getElementById('paperEvolutionModal');
-    const content = document.getElementById('paperEvolutionModalContent');
-    if (!modal || !content) return;
-
-    content.innerHTML = `
-      <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-        <span class="badge-severity badge-medium" style="margin:0; font-size: 11px;">PUBLICATION YEAR ${paper.year}</span>
-        <span class="badge-severity badge-low" style="margin:0; font-size: 11px;">${(paper.citation_count || 0).toLocaleString()} CITATIONS</span>
-      </div>
-      <h3 style="font-family:'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 10px; line-height: 1.25;">${escapeHtml(paper.title)}</h3>
-      <p style="font-size: 13px; color: var(--text-soft); font-weight: 600; margin-bottom: 16px;"><strong>Authors:</strong> ${escapeHtml((paper.authors || []).join(', '))}</p>
-
-      <div style="display: grid; grid-template-columns: 1fr; gap: 14px; text-align: left;">
-        <div style="background: var(--pastel-purple); border: 2px solid var(--ink); border-radius: 12px; padding: 14px;">
-          <div style="font-family:'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: var(--purple); margin-bottom: 4px;">MAIN CONTRIBUTION</div>
-          <p style="font-size: 13.5px; color: var(--ink); font-weight: 500;">${escapeHtml(paper.contribution || 'N/A')}</p>
-        </div>
-
-        <div style="background: var(--pastel-blue); border: 2px solid var(--ink); border-radius: 12px; padding: 14px;">
-          <div style="font-family:'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: var(--blue); margin-bottom: 4px;">METHODOLOGY USED</div>
-          <p style="font-size: 13.5px; color: var(--ink); font-weight: 500;">${escapeHtml(paper.methodology || 'N/A')}</p>
-        </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-          <div style="background: var(--pastel-pink); border: 2px solid var(--ink); border-radius: 12px; padding: 14px;">
-            <div style="font-family:'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: #900; margin-bottom: 4px;">KEY LIMITATION</div>
-            <p style="font-size: 12.5px; color: var(--ink); font-weight: 500;">${escapeHtml(paper.limitation || 'N/A')}</p>
-          </div>
-
-          <div style="background: var(--pastel-green); border: 2px solid var(--ink); border-radius: 12px; padding: 14px;">
-            <div style="font-family:'IBM Plex Mono'; font-size: 11px; font-weight: 700; color: #006020; margin-bottom: 4px;">FUTURE SCOPE</div>
-            <p style="font-size: 12.5px; color: var(--ink); font-weight: 500;">${escapeHtml(paper.future_scope || 'N/A')}</p>
-          </div>
-        </div>
-      </div>
-    `;
-
-    modal.style.display = 'flex';
-  }
-
-  function closePaperEvolutionModal() {
-    const modal = document.getElementById('paperEvolutionModal');
-    if (modal) modal.style.display = 'none';
-  }
-
-  function handleEvolutionModalBackdrop(e) {
-    if (e.target.id === 'paperEvolutionModal') {
-      closePaperEvolutionModal();
-    }
-  }
-
-  // ESC key support for closing modals
-  window.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      closePaperEvolutionModal();
-      closeIdeaModal();
-    }
-  });
-
-  window.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-      loadEvolutionTimeline();
-    }, 600);
-  });
-</script>
 
 <!-- Idea Expansion & Lineage Tree Modal (Up to 5 Depths) -->
 <div id="ideaModal" class="modal-overlay" onclick="handleIdeaModalBackdrop(event)">
@@ -2076,6 +2634,67 @@
   </div>
 </div>
 
+<!-- Floating AI Research Notes Button -->
+<button class="floating-notes-btn" id="floatingNotesBtn" onclick="handleCollectNotesClick()">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+  <span>Collect Notes</span>
+</button>
+
+<!-- AI Research Notes Workspace Modal -->
+<div id="notesWorkspaceModal" class="modal-overlay" onclick="handleNotesModalBackdrop(event)">
+  <div class="modal-card" style="max-width: 840px; width: 92%; background: #ffffff; border: 3px solid var(--ink); border-radius: 24px; padding: 26px; box-shadow: 12px 12px 0px var(--ink); position: relative; max-height: 90vh; display: flex; flex-direction: column; text-align: left;">
+    
+    <!-- Modal Header -->
+    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-bottom: 16px; border-bottom: 2px solid var(--ink); flex-wrap: wrap;">
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="/static/logo.png" class="logo-mark" style="width: 48px; height: 48px; transform: none;" alt="Logo">
+        <div>
+          <h3 style="font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; color: var(--ink); margin: 0;">AI Research Notebook</h3>
+          <span id="notesModeBadge" class="badge-severity badge-low" style="margin: 0; font-size: 10.5px;">READ MODE</span>
+        </div>
+      </div>
+      
+      <!-- Action Toolbar -->
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <button id="notesEditBtn" onclick="toggleNotesEditMode()" style="padding: 7px 14px; border-radius: 10px; border: 2px solid var(--ink); background: var(--pastel-yellow); font-family: 'Space Grotesk'; font-weight: 700; font-size: 12.5px; cursor: pointer; box-shadow: 2px 2px 0px var(--ink); transition: transform .1s;">
+          <span id="notesEditBtnText">Edit</span>
+        </button>
+        
+        <button id="notesRefineBtn" onclick="triggerNotesRefine()" style="padding: 7px 14px; border-radius: 10px; border: 2px solid var(--ink); background: var(--pastel-purple); font-family: 'Space Grotesk'; font-weight: 700; font-size: 12.5px; cursor: pointer; box-shadow: 2px 2px 0px var(--ink); transition: transform .1s;">
+          <span>Refine</span>
+        </button>
+        
+        <button id="notesCopyBtn" onclick="copyNotesToClipboard()" style="padding: 7px 14px; border-radius: 10px; border: 2px solid var(--ink); background: var(--pastel-blue); font-family: 'Space Grotesk'; font-weight: 700; font-size: 12.5px; cursor: pointer; box-shadow: 2px 2px 0px var(--ink); transition: transform .1s;">
+          <span>Copy</span>
+        </button>
+
+        <button id="notesExportPdfBtn" onclick="exportNotesPdf()" style="padding: 7px 14px; border-radius: 10px; border: 2px solid var(--ink); background: var(--pastel-pink); font-family: 'Space Grotesk'; font-weight: 700; font-size: 12.5px; cursor: pointer; box-shadow: 2px 2px 0px var(--ink); transition: transform .1s;">
+          <span>Export PDF</span>
+        </button>
+
+        <button onclick="closeNotesWorkspaceModal()" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--ink); background: var(--paper); font-weight: 700; cursor: pointer; box-shadow: 2px 2px 0px var(--ink);">✕</button>
+      </div>
+    </div>
+
+    <!-- Notes Content Area -->
+    <div id="notesModalBody" style="flex: 1; overflow-y: auto; padding-top: 18px; padding-right: 6px;">
+      <div id="notesLoadingState" style="display: none; text-align: center; padding: 40px;">
+        <div class="spinner" style="width: 28px; height: 28px; margin: 0 auto 14px;"></div>
+        <div id="notesLoadingText" style="font-family: 'Space Grotesk'; font-weight: 700; font-size: 16px; color: var(--ink);">Generating Structured Research Notebook...</div>
+        <p style="font-size: 13px; color: var(--text-soft); margin-top: 6px;">Synthesizing Cornell & Zettelkasten structures from analysis data...</p>
+      </div>
+
+      <div id="notesDisplayContainer">
+        <!-- Rendered dynamically -->
+      </div>
+    </div>
+
+    <div id="notesToast" style="display: none; position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 8px 18px; border-radius: 50px; font-family: 'Space Grotesk'; font-weight: 700; font-size: 12.5px; box-shadow: 4px 4px 0px var(--yellow); z-index: 10;">
+      Copied to Clipboard!
+    </div>
+  </div>
+</div>
+
 <script>
   let currentLineage = [];
   let currentDepth = 1;
@@ -2098,6 +2717,15 @@
     await fetchExpandedIdeas(subTitle, currentLineage, currentDepth);
   }
 
+  async function jumpToDepth(idx) {
+    if (idx < 0 || idx >= currentLineage.length) return;
+    currentLineage = currentLineage.slice(0, idx + 1);
+    currentDepth = currentLineage.length;
+    const targetTitle = currentLineage[currentLineage.length - 1];
+    document.getElementById('modalParentTitle').textContent = targetTitle;
+    await fetchExpandedIdeas(targetTitle, currentLineage, currentDepth);
+  }
+
   async function fetchExpandedIdeas(ideaTitle, lineage, depth) {
     const loading = document.getElementById('modalLoading');
     const childList = document.getElementById('modalChildList');
@@ -2105,7 +2733,11 @@
     const breadcrumbs = document.getElementById('breadcrumbTrail');
 
     depthTag.textContent = `DEPTH ${depth} OF 5 · 5 RESEARCH DIMENSIONS`;
-    breadcrumbs.innerHTML = lineage.map((item, i) => `<span style="text-decoration: ${i === lineage.length - 1 ? 'underline' : 'none'}">${escapeHtml(item)}</span>`).join(' &rarr; ');
+    breadcrumbs.innerHTML = lineage.map((item, i) => `
+      <span onclick="jumpToDepth(${i})" style="cursor:pointer; text-decoration:${i === lineage.length - 1 ? 'underline' : 'none'}; font-weight:${i === lineage.length - 1 ? '700' : '500'};" title="Jump to Depth ${i+1}">
+        ${escapeHtml(item)}
+      </span>
+    `).join(' &rarr; ');
 
     loading.style.display = 'block';
     childList.innerHTML = '';
@@ -2114,7 +2746,7 @@
       const resp = await fetch('/insights/ideas/expand', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ idea: ideaTitle, lineage: lineage, depth: depth })
+        body: JSON.stringify({ idea: ideaTitle, lineage: lineage, depth: depth, paper_id: currentPaperId })
       });
       const data = await resp.json();
       loading.style.display = 'none';
@@ -2181,6 +2813,553 @@
       closeIdeaModal();
     }
   }
+
+  // ---------- AI Research Notes Module ----------
+  let activeNotesData = null;
+  let isNotesEditMode = false;
+  let lastAnalysisData = null;
+
+  async function handleCollectNotesClick() {
+    const modal = document.getElementById('notesWorkspaceModal');
+    if (modal) modal.style.display = 'flex';
+
+    const topicVal = document.getElementById('topicInput') ? document.getElementById('topicInput').value.trim() : '';
+    const projId = currentPaperId || (topicVal ? `topic:${topicVal.toLowerCase()}` : 'default_project');
+
+    // 1. Check local/backend cache first
+    try {
+      const resp = await fetch(`/notes/${encodeURIComponent(projId)}`);
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data && data.notes) {
+          activeNotesData = data;
+          isNotesEditMode = false;
+          renderNotesContainer();
+          return;
+        }
+      }
+    } catch (e) {
+      console.warn("Failed fetching saved notes:", e);
+    }
+
+    // 2. If no saved notes, trigger automatic generation
+    await generateNotesFromCurrentAnalysis(projId);
+  }
+
+  async function generateNotesFromCurrentAnalysis(projId) {
+    const loadingState = document.getElementById('notesLoadingState');
+    const displayContainer = document.getElementById('notesDisplayContainer');
+    
+    if (loadingState) loadingState.style.display = 'block';
+    if (displayContainer) displayContainer.style.display = 'none';
+
+    const topicVal = document.getElementById('topicInput') ? document.getElementById('topicInput').value.trim() : '';
+    const topic = topicVal || (currentPaperId ? 'Uploaded Document' : 'Research Topic');
+    
+    // Harvest analysis data if not in memory
+    const analysisPayload = lastAnalysisData || {
+      summary: document.getElementById('resultSummary') ? document.getElementById('resultSummary').textContent : '',
+      findings: Array.from(document.querySelectorAll('#findingsList .finding-card')).map(el => el.textContent.trim()),
+      gaps: Array.from(document.querySelectorAll('#gapsGrid .gap-card')).map(el => el.textContent.trim()),
+      ideas: Array.from(document.querySelectorAll('#ideasGrid .idea-card')).map(el => el.textContent.trim())
+    };
+
+    try {
+      const resp = await fetch('/generate-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: topic,
+          paper_id: currentPaperId,
+          analysis_data: analysisPayload
+        })
+      });
+
+      if (!resp.ok) throw new Error('Notes generation API failed');
+      const data = await resp.json();
+      activeNotesData = data;
+      isNotesEditMode = false;
+
+      // Save to localStorage for quick restore
+      if (projId) localStorage.setItem(`paperdeck_notes_${projId}`, JSON.stringify(data));
+      
+      if (loadingState) loadingState.style.display = 'none';
+      if (displayContainer) displayContainer.style.display = 'block';
+      renderNotesContainer();
+    } catch (err) {
+      console.error("Notes generation error:", err);
+      if (loadingState) loadingState.style.display = 'none';
+      if (displayContainer) {
+        displayContainer.style.display = 'block';
+        displayContainer.innerHTML = `<div style="padding: 20px; color: red; font-weight: 700;">Failed generating notes: ${escapeHtml(err.message)}</div>`;
+      }
+    }
+  }
+
+  function renderNotesContainer() {
+    const displayContainer = document.getElementById('notesDisplayContainer');
+    const modeBadge = document.getElementById('notesModeBadge');
+    const editBtnText = document.getElementById('notesEditBtnText');
+
+    if (!displayContainer || !activeNotesData || !activeNotesData.notes) return;
+    const n = activeNotesData.notes;
+
+    if (isNotesEditMode) {
+      modeBadge.textContent = 'EDIT MODE (AUTO-SAVE)';
+      modeBadge.className = 'badge-severity badge-high';
+      if (editBtnText) editBtnText.textContent = 'Done';
+      
+      // Render Edit Mode Text Inputs & Textareas
+      displayContainer.innerHTML = `
+        <div style="margin-bottom: 20px;">
+          <label style="font-family:'Space Grotesk'; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Notebook Title</label>
+          <input type="text" id="notesEditTitle" value="${escapeHtml(n.title || '')}" 
+                 style="width: 100%; font-family: 'Space Grotesk', sans-serif; font-size: 18px; font-weight: 700; border: 2px solid var(--ink); border-radius: 10px; padding: 10px 14px; margin-top: 4px; box-shadow: 2px 2px 0px var(--ink);">
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <label style="font-family:'Space Grotesk'; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Notebook Sections</label>
+            <button onclick="addNotesSectionInput()" style="padding: 4px 10px; border-radius: 8px; border: 1.5px solid var(--ink); background: var(--pastel-yellow); font-family:'Space Grotesk'; font-weight:700; font-size:11px; cursor:pointer; box-shadow: 2px 2px 0px var(--ink);">+ Add Section</button>
+          </div>
+          <div id="notesEditSectionsContainer" style="display: flex; flex-direction: column; gap: 14px;">
+            ${(n.sections || []).map((sec, idx) => `
+              <div style="background: var(--paper); border: 2px solid var(--ink); border-radius: 12px; padding: 14px; box-shadow: 3px 3px 0px var(--ink); position: relative;">
+                <button onclick="removeNotesSectionInput(${idx})" style="position: absolute; top: 10px; right: 10px; border-radius: 50%; border: 1px solid var(--ink); background: var(--pastel-pink); font-size: 10px; font-weight: 700; width: 22px; height: 22px; cursor: pointer;">✕</button>
+                <input type="text" class="notes-sec-heading" value="${escapeHtml(sec.heading || '')}" placeholder="Section Heading"
+                       style="width: 85%; font-family: 'Space Grotesk', sans-serif; font-size: 14.5px; font-weight: 700; border: 1.5px solid var(--ink); border-radius: 8px; padding: 6px 10px; margin-bottom: 8px;">
+                <textarea class="notes-sec-content" rows="4" placeholder="Section Content..."
+                          style="width: 100%; font-family: sans-serif; font-size: 13.5px; border: 1.5px solid var(--ink); border-radius: 8px; padding: 8px 10px; resize: vertical;">${escapeHtml(sec.content || '')}</textarea>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="font-family:'Space Grotesk'; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Key Takeaways (One per line)</label>
+          <textarea id="notesEditTakeaways" rows="4" 
+                    style="width: 100%; font-family: sans-serif; font-size: 13.5px; border: 2px solid var(--ink); border-radius: 10px; padding: 10px; margin-top: 4px; box-shadow: 2px 2px 0px var(--ink); resize: vertical;">${(n.key_takeaways || []).join('\n')}</textarea>
+        </div>
+
+        <div style="margin-bottom: 20px;">
+          <label style="font-family:'Space Grotesk'; font-size:12px; font-weight:700; color:var(--text-soft); text-transform:uppercase;">Future Research Directions (One per line)</label>
+          <textarea id="notesEditDirections" rows="4" 
+                    style="width: 100%; font-family: sans-serif; font-size: 13.5px; border: 2px solid var(--ink); border-radius: 10px; padding: 10px; margin-top: 4px; box-shadow: 2px 2px 0px var(--ink); resize: vertical;">${(n.future_research_directions || []).join('\n')}</textarea>
+        </div>
+      `;
+    } else {
+      modeBadge.textContent = 'READ MODE';
+      modeBadge.className = 'badge-severity badge-low';
+      if (editBtnText) editBtnText.textContent = 'Edit';
+
+      // Render Read Mode Formatted View
+      displayContainer.innerHTML = `
+        <div style="margin-bottom: 20px; padding-bottom: 14px; border-bottom: 2.5px solid var(--ink);">
+          <h2 style="font-family: 'Space Grotesk', sans-serif; font-size: 22px; font-weight: 700; color: var(--ink); margin-bottom: 4px;">
+            ${escapeHtml(n.title || 'Structured Research Notebook')}
+          </h2>
+          <span style="font-family:'IBM Plex Mono'; font-size:11px; font-weight:700; color:var(--purple); background:var(--pastel-purple); padding:3px 10px; border-radius:6px; border:1px solid var(--ink);">
+            HYBRID NOTEBOOK STRUCTURE (CORNELL + ZETTELKASTEN)
+          </span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 22px;">
+          ${(n.sections || []).map(sec => `
+            <div style="background: #ffffff; border: 2px solid var(--ink); border-radius: 16px; padding: 18px; box-shadow: 4px 4px 0px var(--ink);">
+              <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 16.5px; font-weight: 700; color: var(--ink); margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                <span style="width: 8px; height: 8px; border-radius: 50%; background: var(--yellow); border: 1.5px solid var(--ink);"></span>
+                ${escapeHtml(sec.heading || 'Notebook Section')}
+              </h4>
+              <div style="font-size: 13.5px; color: var(--ink); line-height: 1.6; white-space: pre-wrap; font-weight: 450;">
+                ${escapeHtml(sec.content || '')}
+              </div>
+            </div>
+          `).join('')}
+        </div>
+
+        ${n.key_takeaways && n.key_takeaways.length > 0 ? `
+          <div style="background: var(--pastel-yellow); border: 2px solid var(--ink); border-radius: 16px; padding: 18px; box-shadow: 4px 4px 0px var(--ink); margin-bottom: 18px;">
+            <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              Key Takeaways & Core Concepts
+            </h4>
+            <ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--ink); line-height: 1.6; font-weight: 500;">
+              ${n.key_takeaways.map(t => `<li style="margin-bottom: 6px;">${escapeHtml(t)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+
+        ${n.future_research_directions && n.future_research_directions.length > 0 ? `
+          <div style="background: var(--pastel-blue); border: 2px solid var(--ink); border-radius: 16px; padding: 18px; box-shadow: 4px 4px 0px var(--ink);">
+            <h4 style="font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 10px; display: flex; align-items: center; gap: 6px;">
+              Future Research Directions
+            </h4>
+            <ul style="margin: 0; padding-left: 20px; font-size: 13.5px; color: var(--ink); line-height: 1.6; font-weight: 500;">
+              ${n.future_research_directions.map(d => `<li style="margin-bottom: 6px;">${escapeHtml(d)}</li>`).join('')}
+            </ul>
+          </div>
+        ` : ''}
+      `;
+    }
+  }
+
+  function addNotesSectionInput() {
+    if (!activeNotesData || !activeNotesData.notes) return;
+    if (!activeNotesData.notes.sections) activeNotesData.notes.sections = [];
+    activeNotesData.notes.sections.push({ heading: "New Section", content: "" });
+    renderNotesContainer();
+  }
+
+  function removeNotesSectionInput(idx) {
+    if (!activeNotesData || !activeNotesData.notes || !activeNotesData.notes.sections) return;
+    activeNotesData.notes.sections.splice(idx, 1);
+    renderNotesContainer();
+  }
+
+  async function toggleNotesEditMode() {
+    if (isNotesEditMode) {
+      // Collect Edits into activeNotesData
+      const titleInput = document.getElementById('notesEditTitle');
+      const takeawaysInput = document.getElementById('notesEditTakeaways');
+      const directionsInput = document.getElementById('notesEditDirections');
+
+      const headings = Array.from(document.querySelectorAll('.notes-sec-heading')).map(el => el.value);
+      const contents = Array.from(document.querySelectorAll('.notes-sec-content')).map(el => el.value);
+
+      const sections = headings.map((h, i) => ({ heading: h, content: contents[i] || '' }));
+      const keyTakeaways = takeawaysInput ? takeawaysInput.value.split('\n').map(s => s.trim()).filter(Boolean) : [];
+      const futureDirections = directionsInput ? directionsInput.value.split('\n').map(s => s.trim()).filter(Boolean) : [];
+
+      activeNotesData = {
+        notes: {
+          title: titleInput ? titleInput.value.trim() : 'Research Notebook',
+          sections: sections,
+          key_takeaways: keyTakeaways,
+          future_research_directions: futureDirections
+        }
+      };
+
+      // Save to persistence
+      const topicVal = document.getElementById('topicInput') ? document.getElementById('topicInput').value.trim() : '';
+      const projId = currentPaperId || (topicVal ? `topic:${topicVal.toLowerCase()}` : 'default_project');
+      try {
+        await fetch(`/notes/${encodeURIComponent(projId)}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ notes: activeNotesData })
+        });
+      } catch (e) { console.warn("Failed saving notes:", e); }
+
+      isNotesEditMode = false;
+      renderNotesContainer();
+    } else {
+      isNotesEditMode = true;
+      renderNotesContainer();
+    }
+  }
+
+  async function triggerNotesRefine() {
+    if (!activeNotesData || !activeNotesData.notes) return;
+
+    const loadingState = document.getElementById('notesLoadingState');
+    const displayContainer = document.getElementById('notesDisplayContainer');
+    const loadingText = document.getElementById('notesLoadingText');
+
+    if (loadingText) loadingText.textContent = 'Refining Notes with AI...';
+    if (loadingState) loadingState.style.display = 'block';
+    if (displayContainer) displayContainer.style.display = 'none';
+
+    try {
+      const resp = await fetch('/refine-notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notes: activeNotesData })
+      });
+
+      if (!resp.ok) throw new Error('Refine notes API failed');
+      const refinedData = await resp.json();
+
+      if (refinedData && refinedData.notes) {
+        activeNotesData = refinedData;
+        const topicVal = document.getElementById('topicInput') ? document.getElementById('topicInput').value.trim() : '';
+        const projId = currentPaperId || (topicVal ? `topic:${topicVal.toLowerCase()}` : 'default_project');
+        try {
+          await fetch(`/notes/${encodeURIComponent(projId)}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ notes: activeNotesData })
+          });
+        } catch (e) {}
+      }
+    } catch (err) {
+      console.error("Refinement error:", err);
+    } finally {
+      if (loadingState) loadingState.style.display = 'none';
+      if (displayContainer) displayContainer.style.display = 'block';
+      isNotesEditMode = false;
+      renderNotesContainer();
+    }
+  }
+
+  function copyNotesToClipboard() {
+    if (!activeNotesData || !activeNotesData.notes) return;
+    const n = activeNotesData.notes;
+
+    let text = `# ${n.title || 'Research Notebook'}\n\n`;
+    (n.sections || []).forEach(sec => {
+      text += `## ${sec.heading}\n${sec.content}\n\n`;
+    });
+    if (n.key_takeaways && n.key_takeaways.length > 0) {
+      text += `## Key Takeaways\n`;
+      n.key_takeaways.forEach(t => text += `- ${t}\n`);
+      text += `\n`;
+    }
+    if (n.future_research_directions && n.future_research_directions.length > 0) {
+      text += `## Future Research Directions\n`;
+      n.future_research_directions.forEach(d => text += `- ${d}\n`);
+    }
+
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById('notesToast');
+      if (toast) {
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 2500);
+      }
+    }).catch(err => {
+      alert("Failed copying notes to clipboard: " + err);
+    });
+  }
+
+  function exportNotesPdf() {
+    if (!activeNotesData || !activeNotesData.notes) return;
+    const n = activeNotesData.notes;
+
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      alert("Please allow popups to export PDF");
+      return;
+    }
+
+    printWin.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${escapeHtml(n.title || 'Research Notebook')}</title>
+        <style>
+          body { font-family: 'Helvetica Neue', Arial, sans-serif; padding: 40px; color: #15121F; line-height: 1.6; }
+          h1 { font-size: 26px; border-bottom: 2px solid #15121F; padding-bottom: 10px; margin-bottom: 20px; }
+          h2 { font-size: 18px; margin-top: 24px; color: #15121F; }
+          .section-card { border: 1.5px solid #15121F; border-radius: 10px; padding: 16px; margin-bottom: 16px; page-break-inside: avoid; }
+          ul { padding-left: 20px; }
+          li { margin-bottom: 6px; }
+          .footer { margin-top: 40px; font-size: 11px; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 10px; }
+        </style>
+      </head>
+      <body>
+        <h1>${escapeHtml(n.title || 'Research Notebook')}</h1>
+        <div>
+          ${(n.sections || []).map(sec => `
+            <div class="section-card">
+              <h2>${escapeHtml(sec.heading)}</h2>
+              <p>${escapeHtml(sec.content).replace(/\\n/g, '<br>')}</p>
+            </div>
+          `).join('')}
+        </div>
+        ${n.key_takeaways ? `
+          <div class="section-card" style="background:#fffde7;">
+            <h2>Key Takeaways</h2>
+            <ul>${n.key_takeaways.map(t => `<li>${escapeHtml(t)}</li>`).join('')}</ul>
+          </div>
+        ` : ''}
+        ${n.future_research_directions ? `
+          <div class="section-card" style="background:#e3f2fd;">
+            <h2>Future Research Directions</h2>
+            <ul>${n.future_research_directions.map(d => `<li>${escapeHtml(d)}</li>`).join('')}</ul>
+          </div>
+        ` : ''}
+        <div class="footer">Generated by PaperDeck AI Research Assistant — Team James</div>
+        <script>
+          window.onload = function() { window.print(); }
+        <\/script>
+      </body>
+      </html>
+    `);
+    printWin.document.close();
+  }
+
+  function closeNotesWorkspaceModal() {
+    const modal = document.getElementById('notesWorkspaceModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function handleNotesModalBackdrop(e) {
+    if (e.target.id === 'notesWorkspaceModal') {
+      closeNotesWorkspaceModal();
+    }
+  }
+
+  // ESC key support for closing modals
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closePaperEvolutionModal();
+      closeIdeaModal();
+      closeNotesWorkspaceModal();
+    }
+  });
+
+  // ---------- Typewriter Intro Controller & Audio Effects ----------
+  let typewriterTimeoutId = null;
+  let audioCtx = null;
+
+  function initAudioContext() {
+    if (!audioCtx) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
+  }
+
+  ['click', 'pointerdown', 'keydown', 'touchstart'].forEach(evt => {
+    window.addEventListener(evt, () => {
+      initAudioContext();
+    }, { passive: true });
+  });
+
+  function playKeyClickSound() {
+    try {
+      initAudioContext();
+      if (!audioCtx || audioCtx.state !== 'running') return;
+
+      const now = audioCtx.currentTime;
+
+      // Layer 1: Crisp mechanical snap
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      const filter1 = audioCtx.createBiquadFilter();
+
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(800 + Math.random() * 200, now);
+      osc1.frequency.exponentialRampToValueAtTime(150, now + 0.08);
+
+      filter1.type = 'highpass';
+      filter1.frequency.setValueAtTime(400, now);
+
+      gain1.gain.setValueAtTime(0.5, now);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.085);
+
+      osc1.connect(filter1);
+      filter1.connect(gain1);
+      gain1.connect(audioCtx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.085);
+
+      // Layer 2: Mechanical key switch thud
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(150 + Math.random() * 50, now);
+      osc2.frequency.exponentialRampToValueAtTime(40, now + 0.1);
+
+      gain2.gain.setValueAtTime(0.4, now);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now);
+      osc2.stop(now + 0.12);
+
+    } catch (e) {}
+  }
+
+  function playFadeSwooshSound() {
+    try {
+      if (!audioCtx || audioCtx.state !== 'running') return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(160, now);
+      osc.frequency.exponentialRampToValueAtTime(45, now + 0.6);
+
+      gain.gain.setValueAtTime(0.12, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.6);
+    } catch(e) {}
+  }
+
+  function startCinematicIntro() {
+    if (typewriterTimeoutId) clearTimeout(typewriterTimeoutId);
+    const overlay = document.getElementById('cinematicIntroOverlay');
+    const textEl = document.getElementById('typewriterText');
+    const promptEl = document.getElementById('introStartPrompt');
+    if (!overlay || !textEl) return;
+
+    overlay.style.display = 'flex';
+    overlay.style.opacity = '1';
+    textEl.textContent = '';
+
+    initAudioContext();
+
+    function runTypingSequence() {
+      if (promptEl) promptEl.style.display = 'none';
+      textEl.textContent = '';
+      const sentence = "Begin the journey of your paper with PaperDeck";
+      let index = 0;
+
+      function typeNextChar() {
+        if (index < sentence.length) {
+          textEl.textContent += sentence.charAt(index);
+          playKeyClickSound();
+          index++;
+          typewriterTimeoutId = setTimeout(typeNextChar, 80 + Math.random() * 50);
+        } else {
+          typewriterTimeoutId = setTimeout(() => {
+            playFadeSwooshSound();
+            overlay.style.opacity = '0';
+            setTimeout(() => {
+              overlay.style.display = 'none';
+              sessionStorage.setItem('paperdeck_intro_seen', 'true');
+            }, 800);
+          }, 1800);
+        }
+      }
+
+      typeNextChar();
+    }
+
+    if (audioCtx && audioCtx.state === 'running') {
+      if (promptEl) promptEl.style.display = 'none';
+      typewriterTimeoutId = setTimeout(runTypingSequence, 150);
+    } else {
+      if (promptEl) promptEl.style.display = 'inline-block';
+
+      const unlockAndStart = () => {
+        initAudioContext();
+        window.removeEventListener('click', unlockAndStart);
+        window.removeEventListener('keydown', unlockAndStart);
+        window.removeEventListener('touchstart', unlockAndStart);
+        runTypingSequence();
+      };
+
+      window.addEventListener('click', unlockAndStart, { once: true });
+      window.addEventListener('keydown', unlockAndStart, { once: true });
+      window.addEventListener('touchstart', unlockAndStart, { once: true });
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', () => {
+    // Page load setup - Auto-play typewriter intro on first visit per session
+    if (!sessionStorage.getItem('paperdeck_intro_seen')) {
+      startCinematicIntro();
+    }
+  });
 </script>
 
 </body>

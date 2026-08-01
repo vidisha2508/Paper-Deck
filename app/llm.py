@@ -1,11 +1,10 @@
 """
-LLM wrapper (Groq generation with Gemini fallback).
+LLM wrapper (Groq generation with fast Gemini fallback).
 All prompting for summaries / gap-finding / project ideas / insight
 synthesis routes through `generate`, so model choice/config lives in one place.
 """
 import asyncio
 import logging
-import time
 import httpx
 
 from app.config import settings
@@ -14,19 +13,18 @@ logger = logging.getLogger(__name__)
 
 GROQ_ENDPOINT = "https://api.groq.com/openai/v1/chat/completions"
 
-
 _groq_semaphore = None
 
 
 def _get_semaphore() -> asyncio.Semaphore:
     global _groq_semaphore
     if _groq_semaphore is None:
-        _groq_semaphore = asyncio.Semaphore(1)
+        _groq_semaphore = asyncio.Semaphore(3)
     return _groq_semaphore
 
 
 async def generate(prompt: str, system_instruction: str = None, temperature: float = 0.4) -> str:
-    """Generate text completion using Groq LLM (or fallback to Gemini)."""
+    """Generate text completion using Groq LLM with fast fallback to Gemini."""
     api_key = settings.groq_api_key
     if api_key:
         messages = []
@@ -45,39 +43,30 @@ async def generate(prompt: str, system_instruction: str = None, temperature: flo
         }
 
         semaphore = _get_semaphore()
-        async with semaphore:
-            async with httpx.AsyncClient(timeout=60.0) as client:
-                for attempt in range(6):
-                    try:
-                        response = await client.post(GROQ_ENDPOINT, headers=headers, json=payload)
-                        if response.status_code == 200:
-                            data = response.json()
-                            return data["choices"][0]["message"]["content"] or ""
-                        elif response.status_code in (429, 500, 503) and attempt < 5:
-                            retry_after = response.headers.get("retry-after")
-                            if retry_after:
-                                try:
-                                    val = float(retry_after)
-                                    wait_time = min(val, 15.0) + 0.5
-                                except ValueError:
-                                    wait_time = (2 ** attempt) + 1.0
+        try:
+            async with semaphore:
+                async with httpx.AsyncClient(timeout=15.0) as client:
+                    for attempt in range(2):
+                        try:
+                            response = await client.post(GROQ_ENDPOINT, headers=headers, json=payload)
+                            if response.status_code == 200:
+                                data = response.json()
+                                res_text = data["choices"][0]["message"]["content"] or ""
+                                if res_text:
+                                    return res_text
+                            elif response.status_code == 429:
+                                logger.warning(f"Groq API 429 Rate Limit (attempt {attempt+1}/2). Falling back fast.")
+                                await asyncio.sleep(1.0)
                             else:
-                                wait_time = (2 ** attempt) + 1.0
-                            logger.warning(
-                                f"Groq API status {response.status_code} ({response.text[:200]}), waiting {wait_time:.1f}s (attempt {attempt+1}/6)..."
-                            )
-                            await asyncio.sleep(wait_time)
-                        else:
-                            response.raise_for_status()
-                    except Exception as e:
-                        if attempt < 5:
-                            await asyncio.sleep((2 ** attempt) + 1.0)
-                        else:
-                            logger.error(f"Groq API error: {e}")
+                                logger.warning(f"Groq API status {response.status_code}")
+                                break
+                        except Exception as err:
+                            logger.warning(f"Groq request error: {err}")
                             break
-        return ""
+        except Exception as e:
+            logger.error(f"Groq Execution Exception: {e}")
 
-    # Fallback to Gemini if Groq API key is not set
+    # Fallback to Gemini if Groq fails or API key is not set
     try:
         from app.embeddings import get_client
         from google.genai import types
@@ -100,8 +89,10 @@ async def generate(prompt: str, system_instruction: str = None, temperature: flo
                 logger.error(f"Gemini LLM error: {e}")
                 return ""
 
-        return await asyncio.to_thread(_generate_gemini_sync)
+        gemini_result = await asyncio.to_thread(_generate_gemini_sync)
+        if gemini_result:
+            return gemini_result
     except Exception as e:
         logger.error(f"LLM fallback error: {e}")
-        return ""
 
+    return ""

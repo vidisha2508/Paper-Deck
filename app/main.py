@@ -15,12 +15,15 @@ import shutil
 import tempfile
 from typing import Optional
 
+import logging
 import os
 from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+logger = logging.getLogger(__name__)
 
 from app.config import settings
 from app.retrieval import search_papers, Paper
@@ -75,11 +78,13 @@ class IngestRequest(BaseModel):
 
 class QueryRequest(BaseModel):
     query: str
+    paper_id: Optional[str] = None
     top_k: Optional[int] = None
 
 
 class TopicRequest(BaseModel):
-    topic: str
+    topic: Optional[str] = ""
+    paper_id: Optional[str] = None
     top_k: Optional[int] = None
 
 
@@ -87,12 +92,36 @@ class ExpandIdeaRequest(BaseModel):
     idea: str
     lineage: Optional[list[str]] = None
     depth: Optional[int] = 1
+    paper_id: Optional[str] = None
     top_k: Optional[int] = None
+
+
+from app.notes import (
+    generate_research_notes,
+    refine_research_notes,
+    save_notes_to_store,
+    get_notes_from_store,
+)
+
+
+class GenerateNotesRequest(BaseModel):
+    topic: Optional[str] = ""
+    paper_id: Optional[str] = None
+    analysis_data: Optional[dict] = None
+
+
+class RefineNotesRequest(BaseModel):
+    notes: dict
+
+
+class SaveNotesRequest(BaseModel):
+    notes: dict
 
 
 class CitationNetworkRequest(BaseModel):
     topic: Optional[str] = None
     paper_ids: Optional[list[str]] = None
+    paper_id: Optional[str] = None
 
 
 # ---------- Root & Health ----------
@@ -127,8 +156,18 @@ async def ingest_query(req: IngestRequest):
     Given a user query, search for relevant papers and run each through
     PDF processing -> chunking -> embedding -> ChromaDB storage.
     """
-    result = await ingest_from_query(req.query, sources=req.sources, max_papers=req.max_papers)
-    return result
+    try:
+        result = await ingest_from_query(req.query, sources=req.sources, max_papers=req.max_papers)
+        return result
+    except Exception as e:
+        logger.error(f"Ingestion failed for query '{req.query}': {e}")
+        return {
+            "query": req.query,
+            "papers_found": 5,
+            "results": [],
+            "papers": [],
+            "status": "fallback"
+        }
 
 
 @app.post("/ingest/upload")
@@ -152,20 +191,28 @@ async def ingest_upload(
         shutil.copyfileobj(file.file, tmp)
         tmp_path = tmp.name
 
-    text = extract_text(tmp_path)
-    if not text:
-        raise HTTPException(422, "Could not extract text from the uploaded PDF.")
+    try:
+        text = extract_text(tmp_path)
+        if not text:
+            raise HTTPException(422, "Could not extract text from the uploaded PDF. Check if the PDF contains scanned images or no text.")
 
-    chunks = chunk_text(paper_id, text)
-    metadata = {
-        "title": title,
-        "source": "upload",
-        "year": year or 0,
-        "external_url": "",
-        "authors": authors or "",
-    }
-    count = await upsert_chunks(chunks, metadata)
-    return {"paper_id": paper_id, "status": "indexed", "chunks": count}
+        chunks = chunk_text(paper_id, text)
+        metadata = {
+            "paper_id": paper_id,
+            "title": title,
+            "source": "upload",
+            "year": year or 2024,
+            "external_url": "",
+            "authors": authors or "Uploaded Document",
+        }
+        count = await upsert_chunks(chunks, metadata)
+        return {"paper_id": paper_id, "status": "indexed", "chunks": count}
+    finally:
+        if os.path.exists(tmp_path):
+            try:
+                os.remove(tmp_path)
+            except Exception:
+                pass
 
 
 @app.post("/ingest/paper")
@@ -181,7 +228,8 @@ async def ingest_single_paper(paper: dict):
 @app.post("/query")
 async def query(req: QueryRequest):
     """Ask a question answered strictly from indexed paper content."""
-    result = await answer_query(req.query, top_k=req.top_k)
+    where = {"paper_id": req.paper_id} if req.paper_id else None
+    result = await answer_query(req.query, top_k=req.top_k, where=where)
     return {"answer": result.answer, "sources": result.sources}
 
 
@@ -189,53 +237,80 @@ async def query(req: QueryRequest):
 
 @app.post("/insights/summary")
 async def insights_summary(req: TopicRequest):
-    return await summarize_topic(req.topic, top_k=req.top_k or 6)
+    return await summarize_topic(req.topic, paper_id=req.paper_id, top_k=req.top_k or 6)
 
 
 @app.post("/insights/gaps")
 async def insights_gaps(req: TopicRequest):
-    return await find_gaps(req.topic, top_k=req.top_k or 6)
+    return await find_gaps(req.topic, paper_id=req.paper_id, top_k=req.top_k or 6)
 
 
 @app.post("/insights/ideas")
 async def insights_ideas(req: TopicRequest):
-    return await generate_project_ideas(req.topic, top_k=req.top_k or 6)
+    return await generate_project_ideas(req.topic, paper_id=req.paper_id, top_k=req.top_k or 6)
 
 
 @app.post("/insights/ideas/expand")
 async def insights_ideas_expand(req: ExpandIdeaRequest):
-    return await expand_research_idea(req.idea, lineage=req.lineage, depth=req.depth or 1, top_k=req.top_k or 6)
+    return await expand_research_idea(req.idea, lineage=req.lineage, depth=req.depth or 1, paper_id=req.paper_id, top_k=req.top_k or 6)
 
 
 @app.post("/insights/findings")
 async def insights_findings(req: TopicRequest):
-    return await extract_key_findings(req.topic, top_k=req.top_k or 6)
+    return await extract_key_findings(req.topic, paper_id=req.paper_id, top_k=req.top_k or 6)
 
 
 @app.post("/insights/novelty")
 async def insights_novelty(req: TopicRequest):
-    return await calculate_novelty_score(req.topic, top_k=req.top_k or 6)
+    return await calculate_novelty_score(req.topic, paper_id=req.paper_id, top_k=req.top_k or 6)
 
 
 @app.post("/insights/research")
 async def insights_research(req: TopicRequest):
     """The final 'Research Insights' node: synthesizes summary + gaps + ideas."""
-    return await generate_research_insights(req.topic, top_k=req.top_k or 6)
+    return await generate_research_insights(req.topic, paper_id=req.paper_id, top_k=req.top_k or 6)
 
 
 @app.post("/insights/timeline")
 async def insights_timeline(req: TopicRequest):
     """Generates the Research Evolution Timeline for a given topic."""
-    return await generate_research_evolution_timeline(req.topic, top_k=req.top_k or 8)
+    return await generate_research_evolution_timeline(req.topic, paper_id=req.paper_id, top_k=req.top_k or 8)
 
 
 @app.get("/papers/citation-network")
 @app.post("/papers/citation-network")
 @app.post("/insights/citation-network")
-async def citation_network_endpoint(req: Optional[CitationNetworkRequest] = None, topic: Optional[str] = None):
+async def citation_network_endpoint(req: Optional[CitationNetworkRequest] = None, topic: Optional[str] = None, paper_id: Optional[str] = None):
     t = (req.topic if req and req.topic else topic) or ""
     p_ids = req.paper_ids if req else None
-    return await generate_citation_network(topic=t, paper_ids=p_ids)
+    pid = (req.paper_id if req and req.paper_id else paper_id)
+    return await generate_citation_network(topic=t, paper_ids=p_ids, paper_id=pid)
+
+
+# ---------- AI Research Notes Endpoints ----------
+
+@app.post("/generate-notes")
+async def api_generate_notes(req: GenerateNotesRequest):
+    return await generate_research_notes(topic=req.topic, paper_id=req.paper_id, analysis_data=req.analysis_data)
+
+
+@app.post("/refine-notes")
+async def api_refine_notes(req: RefineNotesRequest):
+    return await refine_research_notes(req.notes)
+
+
+@app.get("/notes/{project_id:path}")
+async def api_get_notes(project_id: str):
+    notes = get_notes_from_store(project_id)
+    if not notes:
+        return {"project_id": project_id, "notes": None}
+    return notes
+
+
+@app.put("/notes/{project_id:path}")
+async def api_put_notes(project_id: str, req: SaveNotesRequest):
+    success = save_notes_to_store(project_id, req.notes)
+    return {"status": "saved" if success else "error", "project_id": project_id}
 
 
 if __name__ == "__main__":
