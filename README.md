@@ -177,8 +177,7 @@ We believe the future of research lies not in reading more papers, but in uncove
 ## Team
 
 - Vidisha Jain
-- Muskan
-- Khushi
+- Muskan Khushi
 - Ananya Pathak
 - Ojas Omprakash Karole
 
